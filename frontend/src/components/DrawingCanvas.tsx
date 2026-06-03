@@ -122,19 +122,12 @@ export function DrawingCanvas({
   }
 
   return (
-    <div>
+    <div className="canvas-area">
       <canvas
         ref={canvasRef}
         width={width}
         height={height}
-        style={{
-          border: "2px solid #333",
-          borderRadius: 4,
-          cursor: "crosshair",
-          touchAction: "none",
-          maxWidth: "100%",
-          height: "auto",
-        }}
+        className="canvas-box"
         onMouseDown={handleStart}
         onMouseMove={handleMove}
         onMouseUp={handleEnd}
@@ -143,15 +136,15 @@ export function DrawingCanvas({
         onTouchMove={handleMove}
         onTouchEnd={handleEnd}
       />
-      <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-        <button onClick={handleUndo} disabled={strokes.length === 0}>
+      <div className="actions">
+        <button className="btn btn-primary" onClick={handleSubmit} disabled={strokes.length === 0}>
+          Submit
+        </button>
+        <button className="btn" onClick={handleUndo} disabled={strokes.length === 0}>
           Undo
         </button>
-        <button onClick={handleClear} disabled={strokes.length === 0}>
+        <button className="btn" onClick={handleClear} disabled={strokes.length === 0}>
           Clear
-        </button>
-        <button onClick={handleSubmit} disabled={strokes.length === 0}>
-          Submit
         </button>
       </div>
     </div>
