@@ -1,10 +1,14 @@
 import uuid
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
+from rest_framework.test import APIClient
+from rest_framework import status as http_status
 
 from .models import Attempt, Symbol
 from .repositories import AttemptRepository, SymbolRepository
+from .services import submit_attempt, get_user_progress
 
 
 class SymbolModelTest(TestCase):
@@ -106,3 +110,124 @@ class AttemptRepositoryTest(TestCase):
         entry = next(p for p in progress if p["symbol__letter"] == "A")
         self.assertEqual(entry["total"], 2)
         self.assertEqual(entry["correct"], 1)
+
+
+class SubmitAttemptServiceTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("testuser", password="testpass123x")
+        Symbol.objects.create(letter="A", name="Alpha")
+
+    @patch("checker.services.SupabaseStorageClient")
+    @patch("checker.services.async_task")
+    def test_submit_attempt_creates_pending_attempt(self, mock_async, mock_storage_cls):
+        mock_storage = mock_storage_cls.return_value
+        mock_storage.upload.return_value = "https://example.com/uploaded.png"
+
+        attempt = submit_attempt(
+            user=self.user,
+            symbol_letter="A",
+            image_data="aW1hZ2VkYXRh",
+        )
+
+        self.assertEqual(attempt.status, "pending")
+        self.assertEqual(attempt.image_url, "https://example.com/uploaded.png")
+        mock_async.assert_called_once()
+
+    def test_submit_attempt_invalid_symbol_raises(self):
+        with self.assertRaises(Symbol.DoesNotExist):
+            submit_attempt(
+                user=self.user,
+                symbol_letter="Z",
+                image_data="aW1hZ2VkYXRh",
+            )
+
+
+class GetUserProgressServiceTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("testuser", password="testpass123x")
+        self.symbol = Symbol.objects.create(letter="A", name="Alpha")
+
+    def test_returns_progress_list(self):
+        Attempt.objects.create(
+            user=self.user, symbol=self.symbol,
+            image_url="https://ex.com/1.png",
+            is_correct=True, status="completed",
+        )
+        progress = get_user_progress(self.user)
+        self.assertEqual(len(progress), 1)
+        self.assertEqual(progress[0]["symbol__letter"], "A")
+        self.assertEqual(progress[0]["correct"], 1)
+
+
+class SymbolViewTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user("testuser", password="testpass123x")
+        self.client.force_authenticate(user=self.user)
+        Symbol.objects.create(letter="A", name="Alpha")
+        Symbol.objects.create(letter="B", name="Bravo")
+
+    def test_list_symbols(self):
+        response = self.client.get("/api/symbols/")
+        self.assertEqual(response.status_code, http_status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    def test_get_symbol_by_letter(self):
+        response = self.client.get("/api/symbols/A/")
+        self.assertEqual(response.status_code, http_status.HTTP_200_OK)
+        self.assertEqual(response.data["letter"], "A")
+
+    def test_unauthenticated_returns_401(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.get("/api/symbols/")
+        self.assertEqual(response.status_code, http_status.HTTP_401_UNAUTHORIZED)
+
+
+class AttemptViewTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user("testuser", password="testpass123x")
+        self.client.force_authenticate(user=self.user)
+        self.symbol = Symbol.objects.create(letter="A", name="Alpha")
+
+    @patch("checker.services.SupabaseStorageClient")
+    @patch("checker.services.async_task")
+    def test_create_attempt(self, mock_async, mock_storage_cls):
+        mock_storage_cls.return_value.upload.return_value = "https://ex.com/uploaded.png"
+        response = self.client.post("/api/attempts/", {
+            "symbol_letter": "A",
+            "image_data": "aW1hZ2VkYXRh",
+        })
+        self.assertEqual(response.status_code, http_status.HTTP_201_CREATED)
+        self.assertEqual(response.data["status"], "pending")
+
+    def test_list_attempts(self):
+        Attempt.objects.create(user=self.user, symbol=self.symbol, image_url="https://ex.com/1.png")
+        response = self.client.get("/api/attempts/")
+        self.assertEqual(response.status_code, http_status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+
+    def test_list_attempts_only_own(self):
+        other_user = User.objects.create_user("other", password="testpass123x")
+        Attempt.objects.create(user=other_user, symbol=self.symbol, image_url="https://ex.com/1.png")
+        response = self.client.get("/api/attempts/")
+        self.assertEqual(len(response.data["results"]), 0)
+
+
+class ProgressViewTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user("testuser", password="testpass123x")
+        self.client.force_authenticate(user=self.user)
+        self.symbol = Symbol.objects.create(letter="A", name="Alpha")
+
+    def test_progress_returns_stats(self):
+        Attempt.objects.create(
+            user=self.user, symbol=self.symbol,
+            image_url="https://ex.com/1.png",
+            is_correct=True, status="completed",
+        )
+        response = self.client.get("/api/progress/")
+        self.assertEqual(response.status_code, http_status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["symbol_letter"], "A")
