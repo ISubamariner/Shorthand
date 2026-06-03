@@ -1,15 +1,21 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import "./styles/tokens.css";
+import "./styles/components.css";
+import "./styles/layout.css";
+import { Header } from "./components/Header";
+import { LoginPage } from "./pages/LoginPage";
 import { PracticePage } from "./pages/PracticePage";
+import { ProgressPage } from "./pages/ProgressPage";
 
 export function App() {
   return (
     <BrowserRouter>
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: 20 }}>
-        <h1>Teeline Shorthand Checker</h1>
-        <Routes>
-          <Route path="/" element={<PracticePage />} />
-        </Routes>
-      </div>
+      <Header />
+      <Routes>
+        <Route path="/" element={<PracticePage />} />
+        <Route path="/progress" element={<ProgressPage />} />
+        <Route path="/login" element={<LoginPage />} />
+      </Routes>
     </BrowserRouter>
   );
 }
