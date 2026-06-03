@@ -1,0 +1,43 @@
+:root {
+  --ink: #1a1a1a;
+  --paper: #f7f3eb;
+  --accent: #b5350f;
+  --success: #1d6b3a;
+  --info: #2a5f8f;
+  --muted: #8a7a68;
+  --line: #e8dfd0;
+  --surface: #ffffff;
+
+  --font-heading: 'Syne', sans-serif;
+  --font-body: 'DM Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    transparent, transparent 31px, var(--line) 31px, var(--line) 32px
+  );
+  opacity: 0.2;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+a { color: var(--ink); text-decoration: none; }
+a:hover { color: var(--accent); }
