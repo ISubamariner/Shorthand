@@ -36,11 +36,13 @@ export function DrawingCanvas({
     ctx.lineJoin = "round";
 
     for (const stroke of strokes) {
-      if (stroke.points.length < 2) continue;
+      const first = stroke.points[0];
+      if (stroke.points.length < 2 || !first) continue;
       ctx.beginPath();
-      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+      ctx.moveTo(first.x, first.y);
       for (let i = 1; i < stroke.points.length; i++) {
-        ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        const pt = stroke.points[i];
+        if (pt) ctx.lineTo(pt.x, pt.y);
       }
       ctx.stroke();
     }
@@ -59,6 +61,7 @@ export function DrawingCanvas({
 
     if ("touches" in e) {
       const touch = e.touches[0];
+      if (!touch) return { x: 0, y: 0 };
       return {
         x: (touch.clientX - rect.left) * scaleX,
         y: (touch.clientY - rect.top) * scaleY,
@@ -92,9 +95,12 @@ export function DrawingCanvas({
     ctx.lineWidth = lineWidth;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
+    const prev = pts[pts.length - 2];
+    const curr = pts[pts.length - 1];
+    if (!prev || !curr) return;
     ctx.beginPath();
-    ctx.moveTo(pts[pts.length - 2].x, pts[pts.length - 2].y);
-    ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+    ctx.moveTo(prev.x, prev.y);
+    ctx.lineTo(curr.x, curr.y);
     ctx.stroke();
   }
 
@@ -117,7 +123,7 @@ export function DrawingCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dataUrl = canvas.toDataURL("image/png");
-    const base64 = dataUrl.split(",")[1];
+    const base64 = dataUrl.split(",")[1] ?? "";
     onExport(base64);
   }
 
