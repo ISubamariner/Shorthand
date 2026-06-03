@@ -17,5 +17,8 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 # Prod stage — used by Render
 FROM base AS prod
+RUN groupadd --system app && useradd --system --gid app --home /app app \
+    && chown -R app:app /app
 RUN python manage.py collectstatic --noinput 2>/dev/null || true
+USER app
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2"]

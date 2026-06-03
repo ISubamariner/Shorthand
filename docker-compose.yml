@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:15-alpine
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-shorthand}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shorthand}
@@ -20,7 +20,7 @@ services:
       context: ./backend
       target: dev
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - ./backend:/app
     env_file: .env
@@ -49,7 +49,7 @@ services:
     build:
       context: ./frontend
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
