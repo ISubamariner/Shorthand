@@ -2,6 +2,8 @@ from .base import *  # noqa: F401,F403
 
 DEBUG = True
 
+SECRET_KEY = "insecure-dev-key-for-local-only"
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
