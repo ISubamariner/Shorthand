@@ -1,5 +1,6 @@
-import base64
 import logging
+
+from storage.client import SupabaseStorageClient
 
 from .models import Attempt
 from ml.inference import predictor
@@ -18,11 +19,9 @@ def process_and_predict(attempt_id: str):
     attempt.save(update_fields=["status"])
 
     try:
-        # Fetch the image bytes from the stored URL
-        # In production this would download from Supabase Storage
-        # For now, we pass empty bytes which triggers stub predictions
-        # until a real model.tflite is committed
-        predictions = predictor.predict(b"")
+        storage = SupabaseStorageClient()
+        image_bytes = storage.download(attempt.image_url)
+        predictions = predictor.predict(image_bytes)
 
         top = predictions[0]
         attempt.predicted_label = top["label"]

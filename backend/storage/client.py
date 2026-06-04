@@ -1,3 +1,5 @@
+import urllib.request
+
 from django.conf import settings
 from supabase import create_client
 
@@ -11,3 +13,7 @@ class SupabaseStorageClient:
         bucket = self._client.storage.from_(self._bucket)
         bucket.upload(path, file_bytes, {"content-type": content_type})
         return bucket.get_public_url(path)
+
+    def download(self, url: str) -> bytes:
+        with urllib.request.urlopen(url, timeout=30) as response:
+            return response.read()
