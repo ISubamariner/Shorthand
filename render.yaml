@@ -1,0 +1,60 @@
+services:
+  - type: web
+    name: shorthand-api
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    dockerTarget: prod
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: shorthand-db
+          property: connectionString
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: drawings
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+    buildCommand: ""
+    preDeployCommand: "python manage.py migrate"
+
+  - type: worker
+    name: shorthand-worker
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    dockerTarget: prod
+    dockerCommand: "python manage.py qcluster"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: SECRET_KEY
+        fromService:
+          name: shorthand-api
+          type: web
+          envVarKey: SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: shorthand-db
+          property: connectionString
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: drawings
+
+databases:
+  - name: shorthand-db
+    plan: free
+    databaseName: shorthand
+    user: shorthand
