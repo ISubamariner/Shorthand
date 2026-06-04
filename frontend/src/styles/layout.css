@@ -191,3 +191,27 @@
 .symbol-bar-row.highlight .symbol-bar-letter {
   color: var(--accent);
 }
+
+/* Auth centering */
+.auth-container.auth-centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 80px);
+  margin: 0 auto;
+}
+
+/* Field-level errors and hints */
+.field-error {
+  font-size: 11px;
+  color: var(--accent);
+  margin-top: 4px;
+}
+.field-hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.input-error {
+  border-color: var(--accent);
+}

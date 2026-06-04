@@ -8,12 +8,34 @@ export function LoginPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [welcomeUser, setWelcomeUser] = useState<string | null>(null);
+
+  function clearErrors() {
+    setFieldErrors({});
+    setGeneralError(null);
+  }
+
+  function parseErrors(body: Record<string, unknown>) {
+    if (typeof body.fields === "object" && body.fields !== null) {
+      const fields = body.fields as Record<string, string | string[]>;
+      const parsed: Record<string, string> = {};
+      for (const [key, val] of Object.entries(fields)) {
+        parsed[key] = Array.isArray(val) ? val[0] : val;
+      }
+      setFieldErrors(parsed);
+    } else if (typeof body.error === "string") {
+      setGeneralError(body.error);
+    } else {
+      setGeneralError("Something went wrong");
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    clearErrors();
     setLoading(true);
 
     try {
@@ -21,27 +43,33 @@ export function LoginPage() {
         await api.auth.register({ username, email, password });
       }
       await api.auth.login({ username, password });
-      navigate("/");
+      setWelcomeUser(username);
+      setTimeout(() => navigate("/"), 800);
     } catch (err) {
       if (err instanceof ApiError) {
-        const body = err.body as Record<string, unknown>;
-        setError(
-          typeof body?.error === "string"
-            ? body.error
-            : typeof body?.fields === "object"
-              ? Object.values(body.fields as Record<string, string>).join(", ")
-              : "Something went wrong"
-        );
+        parseErrors(err.body as Record<string, unknown>);
       } else {
-        setError("Connection failed");
+        setGeneralError("Connection failed");
       }
     } finally {
       setLoading(false);
     }
   }
 
+  if (welcomeUser) {
+    return (
+      <div className="auth-container auth-centered">
+        <div className="auth-card" style={{ textAlign: "center", padding: "48px 28px" }}>
+          <div className="section-title">
+            Welcome, <span className="accent">{welcomeUser}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="auth-container">
+    <div className="auth-container auth-centered">
       <div className="auth-card">
         <div className="logo" style={{ textAlign: "center", fontSize: 24, marginBottom: 24 }}>
           Teeline <span className="accent">ML</span>
@@ -51,33 +79,39 @@ export function LoginPage() {
           <div className="form-group">
             <label>Username</label>
             <input
-              className="input"
+              className={`input ${fieldErrors.username ? "input-error" : ""}`}
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="your username"
               required
             />
+            {fieldErrors.username && (
+              <div className="field-error">{fieldErrors.username}</div>
+            )}
           </div>
 
           {isRegistering && (
             <div className="form-group">
               <label>Email</label>
               <input
-                className="input"
+                className={`input ${fieldErrors.email ? "input-error" : ""}`}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
               />
+              {fieldErrors.email && (
+                <div className="field-error">{fieldErrors.email}</div>
+              )}
             </div>
           )}
 
           <div className="form-group">
             <label>Password</label>
             <input
-              className="input"
+              className={`input ${fieldErrors.password ? "input-error" : ""}`}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -85,9 +119,15 @@ export function LoginPage() {
               required
               minLength={10}
             />
+            {isRegistering && !fieldErrors.password && (
+              <div className="field-hint">Minimum 10 characters</div>
+            )}
+            {fieldErrors.password && (
+              <div className="field-error">{fieldErrors.password}</div>
+            )}
           </div>
 
-          {error && <div className="form-error">{error}</div>}
+          {generalError && <div className="form-error">{generalError}</div>}
 
           <div className="form-actions">
             <button className="btn btn-primary" type="submit" disabled={loading}>
@@ -103,14 +143,14 @@ export function LoginPage() {
             {isRegistering ? (
               <>
                 Already have an account?{" "}
-                <a href="#" onClick={(e) => { e.preventDefault(); setIsRegistering(false); setError(null); }}>
+                <a href="#" onClick={(e) => { e.preventDefault(); setIsRegistering(false); clearErrors(); }}>
                   Login
                 </a>
               </>
             ) : (
               <>
                 Need an account?{" "}
-                <a href="#" onClick={(e) => { e.preventDefault(); setIsRegistering(true); setError(null); }}>
+                <a href="#" onClick={(e) => { e.preventDefault(); setIsRegistering(true); clearErrors(); }}>
                   Register
                 </a>
               </>
