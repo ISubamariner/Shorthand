@@ -51,9 +51,9 @@ def main():
     print(f"Size: {size_mb:.2f} MB")
 
     if size_mb > 5:
-        print("WARNING: Model exceeds 5MB target — consider stronger quantization")
+        print("WARNING: Model exceeds 5MB target - consider stronger quantization")
     else:
-        print("✓ Model is within 5MB target")
+        print("OK - Model is within 5MB target")
 
 
 if __name__ == "__main__":

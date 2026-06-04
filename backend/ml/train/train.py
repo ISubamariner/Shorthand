@@ -141,9 +141,9 @@ def main():
     val_loss, val_acc = model.evaluate(val_gen)
     print(f"\nFinal — Val accuracy: {val_acc:.4f}")
 
-    os.makedirs(args.output, exist_ok=True)
-    model.save(args.output)
-    print(f"\nModel saved to {args.output}")
+    os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+    model.export(args.output)
+    print(f"\nModel exported to {args.output}")
 
 
 if __name__ == "__main__":
