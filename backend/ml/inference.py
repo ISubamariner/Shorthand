@@ -1,11 +1,62 @@
+import logging
+import os
+from pathlib import Path
+
+import numpy as np
+
+from .preprocessing import preprocess_image
+
+logger = logging.getLogger(__name__)
+
+LETTERS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+MODEL_PATH = Path(__file__).parent / "model.tflite"
+
+
 class TFLitePredictor:
-    """Stub — real implementation in Phase 3."""
+    def __init__(self):
+        self._interpreter = None
+
+        if MODEL_PATH.exists():
+            try:
+                import tflite_runtime.interpreter as tflite
+
+                self._interpreter = tflite.Interpreter(model_path=str(MODEL_PATH))
+                self._interpreter.allocate_tensors()
+                self._input_details = self._interpreter.get_input_details()
+                self._output_details = self._interpreter.get_output_details()
+                logger.info("TFLite model loaded from %s", MODEL_PATH)
+            except Exception as e:
+                logger.warning("Failed to load TFLite model: %s — using stub predictions", e)
+        else:
+            logger.warning("No model.tflite found at %s — using stub predictions", MODEL_PATH)
 
     def predict(self, image_bytes: bytes) -> list[dict]:
+        if self._interpreter is None:
+            return [{"label": letter, "confidence": 0.0} for letter in LETTERS[:3]]
+
+        input_data = preprocess_image(image_bytes)
+
+        input_detail = self._input_details[0]
+        if input_detail["dtype"] == np.uint8:
+            scale, zero_point = input_detail["quantization"]
+            input_data = (input_data / scale + zero_point).astype(np.uint8)
+
+        self._interpreter.set_tensor(input_detail["index"], input_data)
+        self._interpreter.invoke()
+
+        output_data = self._interpreter.get_tensor(self._output_details[0]["index"])
+        scores = output_data[0]
+
+        if scores.dtype == np.uint8:
+            scale, zero_point = self._output_details[0]["quantization"]
+            scores = (scores.astype(np.float32) - zero_point) * scale
+
+        indexed = list(enumerate(scores))
+        indexed.sort(key=lambda x: x[1], reverse=True)
+
         return [
-            {"label": "A", "confidence": 0.0},
-            {"label": "B", "confidence": 0.0},
-            {"label": "C", "confidence": 0.0},
+            {"label": LETTERS[idx], "confidence": float(score)}
+            for idx, score in indexed[:3]
         ]
 
 
