@@ -23,7 +23,7 @@ export function LoginPage() {
       const fields = body.fields as Record<string, string | string[]>;
       const parsed: Record<string, string> = {};
       for (const [key, val] of Object.entries(fields)) {
-        parsed[key] = Array.isArray(val) ? val[0] : val;
+        parsed[key] = Array.isArray(val) ? (val[0] ?? val.join(", ")) : val;
       }
       setFieldErrors(parsed);
     } else if (typeof body.error === "string") {
