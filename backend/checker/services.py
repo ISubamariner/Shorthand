@@ -28,5 +28,8 @@ def submit_attempt(user: User, symbol_letter: str, image_data: str):
     return attempt
 
 
-def get_user_progress(user: User) -> list[dict]:
-    return AttemptRepository.get_user_progress(user)
+def get_user_progress(user: User) -> dict:
+    return {
+        "symbols": AttemptRepository.get_user_progress(user),
+        "current_streak": AttemptRepository.get_current_streak(user),
+    }

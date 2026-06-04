@@ -7,6 +7,7 @@ from .repositories import AttemptRepository, SymbolRepository
 from .serializers import (
     AttemptCreateSerializer,
     AttemptSerializer,
+    ProgressResponseSerializer,
     ProgressSerializer,
     SymbolSerializer,
 )
@@ -52,4 +53,4 @@ class AttemptDetailView(APIView):
 class ProgressView(APIView):
     def get(self, request):
         progress = get_user_progress(request.user)
-        return Response(ProgressSerializer(progress, many=True).data)
+        return Response(ProgressResponseSerializer(progress).data)

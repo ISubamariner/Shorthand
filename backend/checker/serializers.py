@@ -51,3 +51,8 @@ class ProgressSerializer(serializers.Serializer):
         if obj["total"] == 0:
             return 0.0
         return round(obj["correct"] / obj["total"], 4)
+
+
+class ProgressResponseSerializer(serializers.Serializer):
+    symbols = ProgressSerializer(many=True)
+    current_streak = serializers.IntegerField()

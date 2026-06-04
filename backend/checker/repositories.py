@@ -42,3 +42,17 @@ class AttemptRepository:
             )
             .order_by("symbol__letter")
         )
+
+    @staticmethod
+    def get_current_streak(user: User) -> int:
+        attempts = Attempt.objects.filter(
+            user=user, status="completed"
+        ).order_by("-created_at").values_list("is_correct", flat=True)
+
+        streak = 0
+        for is_correct in attempts:
+            if is_correct:
+                streak += 1
+            else:
+                break
+        return streak
