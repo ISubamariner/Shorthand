@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { DrawingCanvas } from "../components/DrawingCanvas";
 import { FeedbackPanel } from "../components/FeedbackPanel";
@@ -6,17 +7,26 @@ import { useJobPoller } from "../hooks/useJobPoller";
 import type { Attempt, Symbol } from "../types";
 
 export function PracticePage() {
+  const [searchParams] = useSearchParams();
   const [symbols, setSymbols] = useState<Symbol[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState<Symbol | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [canvasResetKey, setCanvasResetKey] = useState(0);
 
   const fetchAttempt = useCallback((id: string) => api.attempts.get(id), []);
   const poller = useJobPoller<Attempt>(fetchAttempt);
 
   useEffect(() => {
-    api.symbols.list().then(setSymbols).catch(() => setSubmitError("Failed to load symbols"));
-  }, []);
+    api.symbols.list().then((syms) => {
+      setSymbols(syms);
+      const preselect = searchParams.get("symbol");
+      if (preselect) {
+        const match = syms.find((s) => s.letter === preselect.toUpperCase());
+        if (match) setSelectedSymbol(match);
+      }
+    }).catch(() => setSubmitError("Failed to load symbols"));
+  }, [searchParams]);
 
   async function handleExport(imageData: string) {
     if (!selectedSymbol) return;
@@ -41,10 +51,12 @@ export function PracticePage() {
     const next = symbols[(idx + 1) % symbols.length];
     setSelectedSymbol(next ?? null);
     poller.stopPolling();
+    setCanvasResetKey((k) => k + 1);
   }
 
   function handleRetry() {
     poller.stopPolling();
+    setCanvasResetKey((k) => k + 1);
   }
 
   const currentAttempt = poller.data;
@@ -101,6 +113,7 @@ export function PracticePage() {
             const s = symbols.find((sym) => sym.letter === e.target.value);
             setSelectedSymbol(s ?? null);
             poller.stopPolling();
+            setCanvasResetKey((k) => k + 1);
           }}
         >
           <option value="">Choose...</option>
@@ -113,13 +126,14 @@ export function PracticePage() {
       </div>
 
       {/* Canvas */}
-      {selectedSymbol && <DrawingCanvas onExport={handleExport} />}
+      {selectedSymbol && <DrawingCanvas onExport={handleExport} resetKey={canvasResetKey} />}
 
       {/* Processing state */}
       {isProcessing && (
-        <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 12, marginTop: 16 }}>
-          Analyzing your drawing...
-        </p>
+        <div className="card processing-card">
+          <div className="processing-pulse" />
+          <span>Analyzing your drawing...</span>
+        </div>
       )}
 
       {/* Errors */}
@@ -132,6 +146,23 @@ export function PracticePage() {
         <p style={{ textAlign: "center", color: "var(--accent)", fontSize: 12, marginTop: 16 }}>
           {poller.error}
         </p>
+      )}
+
+      {/* Failed prediction */}
+      {currentAttempt && currentAttempt.status === "failed" && (
+        <div className="card result-card incorrect" style={{ marginTop: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <span style={{ fontSize: 18 }}>!</span>
+            <span className="eyebrow" style={{ color: "var(--accent)" }}>
+              Analysis failed — please try again
+            </span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+            <button className="btn btn-retry" onClick={handleRetry}>
+              Try Again
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Results */}

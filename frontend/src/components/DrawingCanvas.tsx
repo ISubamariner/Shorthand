@@ -5,6 +5,7 @@ interface DrawingCanvasProps {
   height?: number;
   lineWidth?: number;
   onExport: (imageData: string) => void;
+  resetKey?: number;
 }
 
 interface Stroke {
@@ -16,11 +17,16 @@ export function DrawingCanvas({
   height = 400,
   lineWidth = 3,
   onExport,
+  resetKey,
 }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const currentStrokeRef = useRef<Stroke>({ points: [] });
+
+  useEffect(() => {
+    setStrokes([]);
+  }, [resetKey]);
 
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
