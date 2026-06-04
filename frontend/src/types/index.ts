@@ -24,6 +24,11 @@ export interface Progress {
   accuracy: number;
 }
 
+export interface ProgressResponse {
+  symbols: Progress[];
+  current_streak: number;
+}
+
 export interface TokenPair {
   access: string;
   refresh: string;

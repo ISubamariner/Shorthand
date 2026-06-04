@@ -176,3 +176,18 @@
   width: 36px;
   text-align: right;
 }
+
+/* Progress page — clickable rows */
+.symbol-bar-row.clickable {
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 2px 4px;
+  margin: 0 -4px;
+  transition: background 0.15s;
+}
+.symbol-bar-row.clickable:hover {
+  background: var(--surface);
+}
+.symbol-bar-row.highlight .symbol-bar-letter {
+  color: var(--accent);
+}

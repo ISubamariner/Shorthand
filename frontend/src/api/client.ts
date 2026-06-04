@@ -1,4 +1,4 @@
-import type { Attempt, Progress, Symbol, TokenPair, User } from "../types";
+import type { Attempt, ProgressResponse, Symbol, TokenPair, User } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
@@ -99,7 +99,7 @@ export const api = {
     },
   },
   progress: {
-    get(): Promise<Progress[]> {
+    get(): Promise<ProgressResponse> {
       return request("/progress/");
     },
   },
