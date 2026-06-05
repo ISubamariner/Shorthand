@@ -26,7 +26,6 @@ export function WordPracticePage() {
   const [activePosition, setActivePosition] = useState<number | null>(null);
   const [letterStatuses, setLetterStatuses] = useState<Record<number, LetterStatus>>({});
   const [canvasResetKey, setCanvasResetKey] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
   const { data: attempt, startPolling, stopPolling } = useJobPoller(api.attempts.get);
@@ -58,10 +57,10 @@ export function WordPracticePage() {
 
   async function handleExport(base64: string) {
     if (!selectedWord || !session || activePosition === null) return;
-    setSubmitting(true);
+    const component = selectedWord.components[activePosition];
+    if (!component) return;
     setSubmitError("");
     try {
-      const component = selectedWord.components[activePosition];
       const created = await api.attempts.create({
         symbol_letter: component.letter,
         image_data: base64,
@@ -71,8 +70,6 @@ export function WordPracticePage() {
       startPolling(created.id);
     } catch {
       setSubmitError("Failed to submit. Try again.");
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -188,10 +185,10 @@ export function WordPracticePage() {
             </div>
           </div>
 
-          {activePosition !== null && !attempt && (
+          {activePosition !== null && !attempt && selectedWord.components[activePosition] && (
             <div className="canvas-section">
               <p>
-                Draw letter: <strong>{selectedWord.components[activePosition].letter}</strong>
+                Draw letter: <strong>{selectedWord.components[activePosition]!.letter}</strong>
               </p>
               <DrawingCanvas
                 resetKey={canvasResetKey}
@@ -201,10 +198,10 @@ export function WordPracticePage() {
             </div>
           )}
 
-          {attempt && activePosition !== null && (
+          {attempt && activePosition !== null && selectedWord.components[activePosition] && (
             <FeedbackPanel
               attempt={attempt}
-              expectedLetter={selectedWord.components[activePosition].letter}
+              expectedLetter={selectedWord.components[activePosition]!.letter}
               onRetry={handleRetry}
               onNext={handleNextLetter}
             />
