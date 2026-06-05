@@ -1,6 +1,9 @@
 import { NavLink } from "react-router-dom";
 import { api, getAccessToken } from "../api/client";
 
+const API_BASE = import.meta.env.VITE_API_URL || "/api";
+const ADMIN_URL = API_BASE.replace(/\/api\/?$/, "/admin/");
+
 export function Header() {
   const isLoggedIn = getAccessToken() !== null;
 
@@ -40,6 +43,14 @@ export function Header() {
           >
             Progress
           </NavLink>
+          <a
+            href={ADMIN_URL}
+            className="tab"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Admin
+          </a>
         </div>
       )}
     </div>
