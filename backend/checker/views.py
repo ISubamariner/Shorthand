@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
 
@@ -21,12 +22,16 @@ from .services import get_user_progress, submit_attempt
 
 
 class SymbolListView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request):
         symbols = SymbolRepository.get_all()
         return Response(SymbolSerializer(symbols, many=True).data)
 
 
 class SymbolDetailView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request, letter):
         symbol = SymbolRepository.get_by_letter(letter)
         return Response(SymbolSerializer(symbol).data)

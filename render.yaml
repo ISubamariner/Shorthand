@@ -24,7 +24,7 @@ services:
       - key: DJANGO_SUPERUSER_PASSWORD
         sync: false
     buildCommand: ""
-    preDeployCommand: "python manage.py migrate && python manage.py seed_admin"
+    preDeployCommand: "python manage.py migrate && python manage.py seed_admin && python manage.py seed_symbols"
 
 databases:
   - name: shorthand-db
