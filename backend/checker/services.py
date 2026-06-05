@@ -1,13 +1,10 @@
 import base64
-import logging
 
 from django.contrib.auth.models import User
 
-from ml.inference import predictor
+from jobs.repository import JobRepository
 
 from .repositories import AttemptRepository, SymbolRepository
-
-logger = logging.getLogger(__name__)
 
 
 def submit_attempt(user: User, symbol_letter: str, image_data: str):
@@ -21,18 +18,12 @@ def submit_attempt(user: User, symbol_letter: str, image_data: str):
         image_data=image_bytes,
     )
 
-    try:
-        predictions = predictor.predict(image_bytes)
-        top = predictions[0]
-        attempt.predicted_label = top["label"]
-        attempt.confidence = top["confidence"]
-        attempt.is_correct = attempt.predicted_label == symbol.letter
-        attempt.status = "completed"
-    except Exception:
-        logger.exception("Prediction failed for attempt %s", attempt.id)
-        attempt.status = "failed"
-
-    attempt.save(update_fields=["predicted_label", "confidence", "is_correct", "status"])
+    JobRepository.enqueue(
+        job_type="predict",
+        payload={"attempt_id": str(attempt.id)},
+        user=user,
+        correlation_key=f"predict:{attempt.id}",
+    )
 
     return attempt
 

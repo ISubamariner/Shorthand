@@ -2,7 +2,12 @@ from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
+
+
+class AttemptSubmitThrottle(UserRateThrottle):
+    rate = "10/min"
 
 from .repositories import AttemptRepository, SymbolRepository
 from .serializers import (
@@ -33,6 +38,11 @@ class AttemptListView(APIView):
         paginator = PageNumberPagination()
         page = paginator.paginate_queryset(attempts, request)
         return paginator.get_paginated_response(AttemptSerializer(page, many=True).data)
+
+    def get_throttles(self):
+        if self.request.method == "POST":
+            return [AttemptSubmitThrottle()]
+        return []
 
     def post(self, request):
         serializer = AttemptCreateSerializer(data=request.data)

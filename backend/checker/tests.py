@@ -5,6 +5,8 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status as http_status
 
+from jobs.models import Job
+
 from .models import Attempt, Symbol
 from .repositories import AttemptRepository, SymbolRepository
 from .services import submit_attempt, get_user_progress
@@ -112,15 +114,16 @@ class SubmitAttemptServiceTest(TestCase):
         self.user = User.objects.create_user("testuser", password="testpass123x")
         Symbol.objects.create(letter="A", name="Alpha")
 
-    def test_submit_attempt_creates_and_predicts(self):
+    def test_submit_attempt_enqueues_job(self):
         attempt = submit_attempt(
             user=self.user,
             symbol_letter="A",
             image_data="aW1hZ2VkYXRh",
         )
 
-        self.assertIn(attempt.status, ("completed", "failed"))
+        self.assertEqual(attempt.status, "pending")
         self.assertTrue(attempt.image_data)
+        self.assertTrue(Job.objects.filter(correlation_key=f"predict:{attempt.id}").exists())
 
     def test_submit_attempt_invalid_symbol_raises(self):
         with self.assertRaises(Symbol.DoesNotExist):
@@ -184,7 +187,7 @@ class AttemptViewTest(TestCase):
             "image_data": "aW1hZ2VkYXRh",
         })
         self.assertEqual(response.status_code, http_status.HTTP_201_CREATED)
-        self.assertIn(response.data["status"], ("completed", "failed"))
+        self.assertEqual(response.data["status"], "pending")
 
     def test_list_attempts(self):
         Attempt.objects.create(user=self.user, symbol=self.symbol)

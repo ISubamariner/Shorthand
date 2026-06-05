@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     # Local
     "accounts",
     "checker",
+    "jobs",
 ]
 
 MIDDLEWARE = [

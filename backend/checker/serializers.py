@@ -48,7 +48,7 @@ class AttemptSerializer(serializers.ModelSerializer):
 
 class AttemptCreateSerializer(serializers.Serializer):
     symbol_letter = serializers.CharField(max_length=1)
-    image_data = serializers.CharField(help_text="Base64-encoded PNG image data")
+    image_data = serializers.CharField(max_length=700_000, help_text="Base64-encoded PNG image data")
 
 
 class ProgressSerializer(serializers.Serializer):
