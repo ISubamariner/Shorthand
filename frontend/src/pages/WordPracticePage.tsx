@@ -91,6 +91,8 @@ export function WordPracticePage() {
     if (!session) return;
     const updated = await api.wordSessions.complete(session.id);
     setSession(updated);
+    setActivePosition(null);
+    stopPolling();
   }
 
   function handleNextLetter() {

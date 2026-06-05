@@ -83,9 +83,20 @@ class AttemptListView(APIView):
                 owner_filter["user"] = owner["user"]
             else:
                 owner_filter["anonymous_session"] = owner["session"]
-            word_session = WordAttemptSession.objects.get(
-                id=word_session_id, **owner_filter
-            )
+            try:
+                word_session = WordAttemptSession.objects.get(
+                    id=word_session_id, **owner_filter
+                )
+            except WordAttemptSession.DoesNotExist:
+                return Response(
+                    {"detail": "Word session not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            if word_session.status != WordAttemptSession.Status.IN_PROGRESS:
+                return Response(
+                    {"detail": "Word session is not in progress."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         attempt = submit_attempt(
             **_get_owner(request),

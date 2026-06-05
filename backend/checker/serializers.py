@@ -52,7 +52,16 @@ class AttemptCreateSerializer(serializers.Serializer):
     symbol_letter = serializers.CharField(max_length=1)
     image_data = serializers.CharField(max_length=700_000, help_text="Base64-encoded PNG image data")
     word_session = serializers.UUIDField(required=False, allow_null=True)
-    word_position = serializers.IntegerField(required=False, allow_null=True)
+    word_position = serializers.IntegerField(required=False, allow_null=True, min_value=0)
+
+    def validate(self, attrs):
+        has_session = attrs.get("word_session") is not None
+        has_position = attrs.get("word_position") is not None
+        if has_session != has_position:
+            raise serializers.ValidationError(
+                "word_session and word_position must both be provided or both omitted."
+            )
+        return attrs
 
 
 class ProgressSerializer(serializers.Serializer):

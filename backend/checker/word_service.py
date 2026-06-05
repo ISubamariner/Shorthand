@@ -39,31 +39,42 @@ def complete_session(
     user: User | None = None,
     session: AnonymousSession | None = None,
 ) -> WordAttemptSession:
-    word_session = WordSessionRepository.get_by_id(
-        session_id, user=user, session=session
-    )
+    with transaction.atomic():
+        owner_filter = {}
+        if user:
+            owner_filter["user"] = user
+        elif session:
+            owner_filter["anonymous_session"] = session
 
-    completed_attempts = word_session.attempts.filter(status="completed")
-    correct_count = completed_attempts.filter(is_correct=True).count()
-    total_letters = word_session.letters_total
+        word_session = (
+            WordAttemptSession.objects.select_for_update()
+            .get(id=session_id, **owner_filter)
+        )
 
-    all_correct_first_try = (
-        correct_count == total_letters
-        and completed_attempts.count() == total_letters
-    )
+        if word_session.status == WordAttemptSession.Status.COMPLETED:
+            return word_session
 
-    points = 10
-    if all_correct_first_try:
-        points += 5
+        completed_attempts = word_session.attempts.filter(status="completed")
+        correct_count = completed_attempts.filter(is_correct=True).count()
+        total_letters = word_session.letters_total
 
-    word_session.letters_correct = correct_count
-    word_session.points_awarded = points
-    word_session.status = WordAttemptSession.Status.COMPLETED
-    word_session.save(update_fields=[
-        "letters_correct", "points_awarded", "status", "updated_at",
-    ])
+        all_correct_first_try = (
+            correct_count == total_letters
+            and completed_attempts.count() == total_letters
+        )
 
-    _award_points(points, user=user, session=session)
+        points = 10
+        if all_correct_first_try:
+            points += 5
+
+        word_session.letters_correct = correct_count
+        word_session.points_awarded = points
+        word_session.status = WordAttemptSession.Status.COMPLETED
+        word_session.save(update_fields=[
+            "letters_correct", "points_awarded", "status", "updated_at",
+        ])
+
+        _award_points(points, user=user, session=session)
 
     return word_session
 
