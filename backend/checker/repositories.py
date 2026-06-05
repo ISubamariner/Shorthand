@@ -16,11 +16,11 @@ class SymbolRepository:
 
 class AttemptRepository:
     @staticmethod
-    def create(user: User, symbol: Symbol, image_url: str) -> Attempt:
+    def create(user: User, symbol: Symbol, image_data: bytes = b"") -> Attempt:
         return Attempt.objects.create(
             user=user,
             symbol=symbol,
-            image_url=image_url,
+            image_data=image_data,
         )
 
     @staticmethod

@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -48,6 +49,18 @@ class AttemptDetailView(APIView):
     def get(self, request, pk):
         attempt = AttemptRepository.get_by_id(pk, request.user)
         return Response(AttemptSerializer(attempt).data)
+
+
+class AttemptImageView(APIView):
+    def get(self, request, pk):
+        attempt = AttemptRepository.get_by_id(pk, request.user)
+        if not attempt.image_data:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return HttpResponse(
+            bytes(attempt.image_data),
+            content_type="image/png",
+            headers={"Cache-Control": "private, max-age=86400"},
+        )
 
 
 class ProgressView(APIView):

@@ -1,10 +1,8 @@
 import base64
-import uuid
 
 from django.contrib.auth.models import User
 from django_q.tasks import async_task
 
-from storage.client import SupabaseStorageClient
 from .repositories import AttemptRepository, SymbolRepository
 
 
@@ -13,14 +11,10 @@ def submit_attempt(user: User, symbol_letter: str, image_data: str):
 
     image_bytes = base64.b64decode(image_data)
 
-    storage = SupabaseStorageClient()
-    path = f"attempts/{user.id}/{uuid.uuid4().hex}.png"
-    image_url = storage.upload(image_bytes, path)
-
     attempt = AttemptRepository.create(
         user=user,
         symbol=symbol,
-        image_url=image_url,
+        image_data=image_bytes,
     )
 
     async_task("checker.tasks.process_and_predict", str(attempt.id))

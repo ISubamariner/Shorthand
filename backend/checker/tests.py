@@ -36,7 +36,6 @@ class AttemptModelTest(TestCase):
         attempt = Attempt.objects.create(
             user=self.user,
             symbol=self.symbol,
-            image_url="https://example.com/drawing.png",
         )
         self.assertEqual(attempt.status, "pending")
         self.assertIsInstance(attempt.id, uuid.UUID)
@@ -45,15 +44,13 @@ class AttemptModelTest(TestCase):
         self.assertIsNone(attempt.is_correct)
 
     def test_user_scoped_manager(self):
-        Attempt.objects.create(user=self.user, symbol=self.symbol, image_url="https://ex.com/1.png")
+        Attempt.objects.create(user=self.user, symbol=self.symbol)
         other_user = User.objects.create_user("other", password="testpass123")
-        Attempt.objects.create(user=other_user, symbol=self.symbol, image_url="https://ex.com/2.png")
+        Attempt.objects.create(user=other_user, symbol=self.symbol)
         self.assertEqual(Attempt.objects.for_user(self.user).count(), 1)
 
     def test_has_updated_at(self):
-        attempt = Attempt.objects.create(
-            user=self.user, symbol=self.symbol, image_url="https://ex.com/1.png"
-        )
+        attempt = Attempt.objects.create(user=self.user, symbol=self.symbol)
         self.assertIsNotNone(attempt.updated_at)
 
 
@@ -85,23 +82,22 @@ class AttemptRepositoryTest(TestCase):
         attempt = AttemptRepository.create(
             user=self.user,
             symbol=self.symbol_a,
-            image_url="https://example.com/drawing.png",
         )
         self.assertEqual(attempt.status, "pending")
         self.assertEqual(attempt.symbol.letter, "A")
 
     def test_get_by_user(self):
-        AttemptRepository.create(user=self.user, symbol=self.symbol_a, image_url="https://ex.com/1.png")
-        AttemptRepository.create(user=self.user, symbol=self.symbol_b, image_url="https://ex.com/2.png")
+        AttemptRepository.create(user=self.user, symbol=self.symbol_a)
+        AttemptRepository.create(user=self.user, symbol=self.symbol_b)
         attempts = AttemptRepository.get_by_user(self.user)
         self.assertEqual(len(attempts), 2)
 
     def test_get_user_progress(self):
-        a1 = AttemptRepository.create(user=self.user, symbol=self.symbol_a, image_url="https://ex.com/1.png")
+        a1 = AttemptRepository.create(user=self.user, symbol=self.symbol_a)
         a1.is_correct = True
         a1.status = "completed"
         a1.save()
-        a2 = AttemptRepository.create(user=self.user, symbol=self.symbol_a, image_url="https://ex.com/2.png")
+        a2 = AttemptRepository.create(user=self.user, symbol=self.symbol_a)
         a2.is_correct = False
         a2.status = "completed"
         a2.save()
@@ -117,12 +113,8 @@ class SubmitAttemptServiceTest(TestCase):
         self.user = User.objects.create_user("testuser", password="testpass123x")
         Symbol.objects.create(letter="A", name="Alpha")
 
-    @patch("checker.services.SupabaseStorageClient")
     @patch("checker.services.async_task")
-    def test_submit_attempt_creates_pending_attempt(self, mock_async, mock_storage_cls):
-        mock_storage = mock_storage_cls.return_value
-        mock_storage.upload.return_value = "https://example.com/uploaded.png"
-
+    def test_submit_attempt_creates_pending_attempt(self, mock_async):
         attempt = submit_attempt(
             user=self.user,
             symbol_letter="A",
@@ -130,7 +122,7 @@ class SubmitAttemptServiceTest(TestCase):
         )
 
         self.assertEqual(attempt.status, "pending")
-        self.assertEqual(attempt.image_url, "https://example.com/uploaded.png")
+        self.assertTrue(attempt.image_data)
         mock_async.assert_called_once()
 
     def test_submit_attempt_invalid_symbol_raises(self):
@@ -150,7 +142,6 @@ class GetUserProgressServiceTest(TestCase):
     def test_returns_progress_list(self):
         Attempt.objects.create(
             user=self.user, symbol=self.symbol,
-            image_url="https://ex.com/1.png",
             is_correct=True, status="completed",
         )
         progress = get_user_progress(self.user)
@@ -190,10 +181,8 @@ class AttemptViewTest(TestCase):
         self.client.force_authenticate(user=self.user)
         self.symbol = Symbol.objects.create(letter="A", name="Alpha")
 
-    @patch("checker.services.SupabaseStorageClient")
     @patch("checker.services.async_task")
-    def test_create_attempt(self, mock_async, mock_storage_cls):
-        mock_storage_cls.return_value.upload.return_value = "https://ex.com/uploaded.png"
+    def test_create_attempt(self, mock_async):
         response = self.client.post("/api/attempts/", {
             "symbol_letter": "A",
             "image_data": "aW1hZ2VkYXRh",
@@ -202,14 +191,14 @@ class AttemptViewTest(TestCase):
         self.assertEqual(response.data["status"], "pending")
 
     def test_list_attempts(self):
-        Attempt.objects.create(user=self.user, symbol=self.symbol, image_url="https://ex.com/1.png")
+        Attempt.objects.create(user=self.user, symbol=self.symbol)
         response = self.client.get("/api/attempts/")
         self.assertEqual(response.status_code, http_status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)
 
     def test_list_attempts_only_own(self):
         other_user = User.objects.create_user("other", password="testpass123x")
-        Attempt.objects.create(user=other_user, symbol=self.symbol, image_url="https://ex.com/1.png")
+        Attempt.objects.create(user=other_user, symbol=self.symbol)
         response = self.client.get("/api/attempts/")
         self.assertEqual(len(response.data["results"]), 0)
 
@@ -224,7 +213,6 @@ class ProgressViewTest(TestCase):
     def test_progress_returns_stats(self):
         Attempt.objects.create(
             user=self.user, symbol=self.symbol,
-            image_url="https://ex.com/1.png",
             is_correct=True, status="completed",
         )
         response = self.client.get("/api/progress/")

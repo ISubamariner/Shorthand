@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .preprocessing import preprocess_image
+from .preprocessing import preprocess_image  # now returns (1, 64, 64, 1)
 
 logger = logging.getLogger(__name__)
 

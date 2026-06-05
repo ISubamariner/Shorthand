@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface DrawingCanvasProps {
   width?: number;
@@ -8,8 +8,9 @@ interface DrawingCanvasProps {
   resetKey?: number;
 }
 
-interface Stroke {
-  points: Array<{ x: number; y: number }>;
+interface Point {
+  x: number;
+  y: number;
 }
 
 export function DrawingCanvas({
@@ -20,15 +21,35 @@ export function DrawingCanvas({
   resetKey,
 }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [strokes, setStrokes] = useState<Stroke[]>([]);
-  const currentStrokeRef = useRef<Stroke>({ points: [] });
+  const isDrawingRef = useRef(false);
+  const strokesRef = useRef<Point[][]>([]);
+  const currentPointsRef = useRef<Point[]>([]);
+  const [strokeCount, setStrokeCount] = useState(0);
 
-  useEffect(() => {
-    setStrokes([]);
-  }, [resetKey]);
+  function drawGuideLines(ctx: CanvasRenderingContext2D) {
+    const lines = [
+      { y: height * 0.2, label: "ascender" },
+      { y: height * 0.4, label: "x-height" },
+      { y: height * 0.7, label: "baseline" },
+      { y: height * 0.9, label: "descender" },
+    ];
 
-  const redraw = useCallback(() => {
+    ctx.save();
+    for (const line of lines) {
+      const isBaseline = line.label === "baseline";
+      ctx.strokeStyle = isBaseline ? "rgba(0, 90, 180, 0.35)" : "rgba(0, 90, 180, 0.15)";
+      ctx.lineWidth = isBaseline ? 1.5 : 1;
+      if (!isBaseline) ctx.setLineDash([6, 4]);
+      else ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(0, line.y);
+      ctx.lineTo(width, line.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawAllStrokes() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -36,27 +57,45 @@ export function DrawingCanvas({
 
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
+
+    drawGuideLines(ctx);
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = lineWidth;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    for (const stroke of strokes) {
-      const first = stroke.points[0];
-      if (stroke.points.length < 2 || !first) continue;
+    for (const pts of strokesRef.current) {
+      if (pts.length < 2) continue;
       ctx.beginPath();
-      ctx.moveTo(first.x, first.y);
-      for (let i = 1; i < stroke.points.length; i++) {
-        const pt = stroke.points[i];
-        if (pt) ctx.lineTo(pt.x, pt.y);
+      ctx.moveTo(pts[0]!.x, pts[0]!.y);
+      for (let i = 1; i < pts.length; i++) {
+        ctx.lineTo(pts[i]!.x, pts[i]!.y);
       }
       ctx.stroke();
     }
-  }, [strokes, width, height, lineWidth]);
+
+    // Also draw in-progress stroke
+    const curr = currentPointsRef.current;
+    if (curr.length >= 2) {
+      ctx.beginPath();
+      ctx.moveTo(curr[0]!.x, curr[0]!.y);
+      for (let i = 1; i < curr.length; i++) {
+        ctx.lineTo(curr[i]!.x, curr[i]!.y);
+      }
+      ctx.stroke();
+    }
+  }
 
   useEffect(() => {
-    redraw();
-  }, [redraw]);
+    strokesRef.current = [];
+    currentPointsRef.current = [];
+    setStrokeCount(0);
+    drawAllStrokes();
+  }, [resetKey]);
+
+  useEffect(() => {
+    drawAllStrokes();
+  });
 
   function getPos(e: React.MouseEvent | React.TouchEvent) {
     const canvas = canvasRef.current;
@@ -81,21 +120,20 @@ export function DrawingCanvas({
 
   function handleStart(e: React.MouseEvent | React.TouchEvent) {
     e.preventDefault();
-    setIsDrawing(true);
-    const pos = getPos(e);
-    currentStrokeRef.current = { points: [pos] };
+    isDrawingRef.current = true;
+    currentPointsRef.current = [getPos(e)];
   }
 
   function handleMove(e: React.MouseEvent | React.TouchEvent) {
-    if (!isDrawing) return;
+    if (!isDrawingRef.current) return;
     e.preventDefault();
     const pos = getPos(e);
-    currentStrokeRef.current.points.push(pos);
+    currentPointsRef.current.push(pos);
 
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!ctx) return;
-    const pts = currentStrokeRef.current.points;
+    const pts = currentPointsRef.current;
     if (pts.length < 2) return;
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = lineWidth;
@@ -111,18 +149,26 @@ export function DrawingCanvas({
   }
 
   function handleEnd() {
-    if (!isDrawing) return;
-    setIsDrawing(false);
-    setStrokes((prev) => [...prev, { ...currentStrokeRef.current }]);
-    currentStrokeRef.current = { points: [] };
+    if (!isDrawingRef.current) return;
+    isDrawingRef.current = false;
+    if (currentPointsRef.current.length >= 2) {
+      strokesRef.current.push([...currentPointsRef.current]);
+    }
+    currentPointsRef.current = [];
+    setStrokeCount(strokesRef.current.length);
   }
 
   function handleUndo() {
-    setStrokes((prev) => prev.slice(0, -1));
+    strokesRef.current.pop();
+    setStrokeCount(strokesRef.current.length);
+    drawAllStrokes();
   }
 
   function handleClear() {
-    setStrokes([]);
+    strokesRef.current = [];
+    currentPointsRef.current = [];
+    setStrokeCount(0);
+    drawAllStrokes();
   }
 
   function handleSubmit() {
@@ -149,13 +195,13 @@ export function DrawingCanvas({
         onTouchEnd={handleEnd}
       />
       <div className="actions">
-        <button className="btn btn-primary" onClick={handleSubmit} disabled={strokes.length === 0}>
+        <button className="btn btn-primary" onClick={handleSubmit} disabled={strokeCount === 0}>
           Submit
         </button>
-        <button className="btn" onClick={handleUndo} disabled={strokes.length === 0}>
+        <button className="btn" onClick={handleUndo} disabled={strokeCount === 0}>
           Undo
         </button>
-        <button className="btn" onClick={handleClear} disabled={strokes.length === 0}>
+        <button className="btn" onClick={handleClear} disabled={strokeCount === 0}>
           Clear
         </button>
       </div>

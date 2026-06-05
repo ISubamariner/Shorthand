@@ -18,6 +18,8 @@ mediafiles/
 # Node
 node_modules/
 frontend/dist/
+frontend/*.tsbuildinfo
+frontend/vite.config.d.ts
 
 # Environment
 .env
@@ -26,6 +28,14 @@ frontend/dist/
 
 # Data (training images)
 data/
+
+# ML training artifacts
+.venv-train/
+backend/ml/saved_model/
+backend/ml/model.keras
+
+# Superpowers plugin
+.superpowers/
 
 # IDE
 .vscode/

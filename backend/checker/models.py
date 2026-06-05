@@ -47,7 +47,7 @@ class Attempt(TimestampedModel):
         on_delete=models.CASCADE,
         related_name="attempts",
     )
-    image_url = models.URLField()
+    image_data = models.BinaryField(blank=True, default=b"")
     predicted_label = models.CharField(max_length=1, null=True, blank=True)
     confidence = models.FloatField(null=True, blank=True)
     is_correct = models.BooleanField(null=True, blank=True)

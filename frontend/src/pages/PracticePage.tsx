@@ -69,8 +69,8 @@ export function PracticePage() {
         {selectedSymbol && (
           <div
             style={{
-              width: 56,
-              height: 56,
+              width: 96,
+              height: 96,
               background: "var(--surface)",
               border: "1.5px solid var(--line)",
               borderRadius: 3,
@@ -78,18 +78,14 @@ export function PracticePage() {
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
+              overflow: "hidden",
             }}
           >
-            <span
-              style={{
-                fontSize: 32,
-                color: "var(--accent)",
-                fontStyle: "italic",
-                fontFamily: "var(--font-heading)",
-              }}
-            >
-              {selectedSymbol.letter.toLowerCase()}
-            </span>
+            <img
+              src={selectedSymbol.reference_image_url || `/symbols/${selectedSymbol.letter.toLowerCase()}.svg`}
+              alt={`Teeline symbol for ${selectedSymbol.letter}`}
+              style={{ width: 84, height: 84, objectFit: "contain" }}
+            />
           </div>
         )}
         <div style={{ flex: 1 }}>

@@ -1,7 +1,5 @@
 import logging
 
-from storage.client import SupabaseStorageClient
-
 from .models import Attempt
 from ml.inference import predictor
 
@@ -19,8 +17,7 @@ def process_and_predict(attempt_id: str):
     attempt.save(update_fields=["status"])
 
     try:
-        storage = SupabaseStorageClient()
-        image_bytes = storage.download(attempt.image_url)
+        image_bytes = bytes(attempt.image_data)
         predictions = predictor.predict(image_bytes)
 
         top = predictions[0]

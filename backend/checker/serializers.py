@@ -11,6 +11,7 @@ class SymbolSerializer(serializers.ModelSerializer):
 
 class AttemptSerializer(serializers.ModelSerializer):
     symbol_letter = serializers.CharField(source="symbol.letter", read_only=True)
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Attempt
@@ -34,6 +35,15 @@ class AttemptSerializer(serializers.ModelSerializer):
             "status",
             "created_at",
         )
+
+    def get_image_url(self, obj):
+        if obj.image_data:
+            request = self.context.get("request")
+            url = f"/api/attempts/{obj.id}/image/"
+            if request:
+                return request.build_absolute_uri(url)
+            return url
+        return ""
 
 
 class AttemptCreateSerializer(serializers.Serializer):
