@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     "accounts",
     "checker",
     "jobs",
+    "admin_api",
 ]
 
 MIDDLEWARE = [
