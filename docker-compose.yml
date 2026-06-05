@@ -31,20 +31,6 @@ services:
         condition: service_healthy
     command: python manage.py runserver 0.0.0.0:8000
 
-  worker:
-    build:
-      context: ./backend
-      target: dev
-    volumes:
-      - ./backend:/app
-    env_file: .env
-    environment:
-      DJANGO_SETTINGS_MODULE: config.settings.local
-    depends_on:
-      db:
-        condition: service_healthy
-    command: python manage.py qcluster
-
   frontend:
     build:
       context: ./frontend

@@ -20,25 +20,6 @@ services:
     buildCommand: ""
     preDeployCommand: "python manage.py migrate"
 
-  - type: worker
-    name: shorthand-worker
-    runtime: docker
-    dockerfilePath: backend/Dockerfile
-    dockerContext: backend
-    dockerCommand: "python manage.py qcluster"
-    envVars:
-      - key: DJANGO_SETTINGS_MODULE
-        value: config.settings.production
-      - key: SECRET_KEY
-        fromService:
-          name: shorthand-api
-          type: web
-          envVarKey: SECRET_KEY
-      - key: DATABASE_URL
-        fromDatabase:
-          name: shorthand-db
-          property: connectionString
-
 databases:
   - name: shorthand-db
     plan: free

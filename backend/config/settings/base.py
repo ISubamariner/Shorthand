@@ -16,7 +16,6 @@ INSTALLED_APPS = [
     # Third-party
     "rest_framework",
     "corsheaders",
-    "django_q",
     # Local
     "accounts",
     "checker",
@@ -90,12 +89,4 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
-# django-q2
-Q_CLUSTER = {
-    "name": "shorthand",
-    "workers": 2,
-    "timeout": 120,
-    "retry": 180,
-    "orm": "default",
-}
 

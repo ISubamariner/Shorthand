@@ -1,5 +1,4 @@
 import uuid
-from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -113,17 +112,15 @@ class SubmitAttemptServiceTest(TestCase):
         self.user = User.objects.create_user("testuser", password="testpass123x")
         Symbol.objects.create(letter="A", name="Alpha")
 
-    @patch("checker.services.async_task")
-    def test_submit_attempt_creates_pending_attempt(self, mock_async):
+    def test_submit_attempt_creates_and_predicts(self):
         attempt = submit_attempt(
             user=self.user,
             symbol_letter="A",
             image_data="aW1hZ2VkYXRh",
         )
 
-        self.assertEqual(attempt.status, "pending")
+        self.assertIn(attempt.status, ("completed", "failed"))
         self.assertTrue(attempt.image_data)
-        mock_async.assert_called_once()
 
     def test_submit_attempt_invalid_symbol_raises(self):
         with self.assertRaises(Symbol.DoesNotExist):
@@ -181,14 +178,13 @@ class AttemptViewTest(TestCase):
         self.client.force_authenticate(user=self.user)
         self.symbol = Symbol.objects.create(letter="A", name="Alpha")
 
-    @patch("checker.services.async_task")
-    def test_create_attempt(self, mock_async):
+    def test_create_attempt(self):
         response = self.client.post("/api/attempts/", {
             "symbol_letter": "A",
             "image_data": "aW1hZ2VkYXRh",
         })
         self.assertEqual(response.status_code, http_status.HTTP_201_CREATED)
-        self.assertEqual(response.data["status"], "pending")
+        self.assertIn(response.data["status"], ("completed", "failed"))
 
     def test_list_attempts(self):
         Attempt.objects.create(user=self.user, symbol=self.symbol)
