@@ -1,9 +1,11 @@
-import type { Attempt, ProgressResponse, Symbol, TokenPair, User } from "../types";
+import type {
+  Attempt, LeaderboardEntry, ProgressResponse, Symbol, TokenPair, User,
+  Word, WordListItem, WordProgress, WordSession, WordTopic,
+} from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 let accessToken: string | null = null;
-let isRedirectingTo401 = false;
 
 function setAccessToken(token: string | null) {
   accessToken = token;
@@ -13,12 +15,22 @@ export function getAccessToken(): string | null {
   return accessToken;
 }
 
+function getSessionToken(): string {
+  let token = localStorage.getItem("shorthand_session_token");
+  if (!token) {
+    token = crypto.randomUUID();
+    localStorage.setItem("shorthand_session_token", token);
+  }
+  return token;
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "X-Session-Token": getSessionToken(),
     ...(options.headers as Record<string, string>),
   };
 
@@ -31,11 +43,8 @@ async function request<T>(
     headers,
   });
 
-  if (response.status === 401 && !isRedirectingTo401) {
-    isRedirectingTo401 = true;
+  if (response.status === 401 && accessToken) {
     setAccessToken(null);
-    window.location.href = "/login";
-    isRedirectingTo401 = false;
   }
 
   if (!response.ok) {
@@ -64,18 +73,18 @@ export const api = {
     register(data: { username: string; email: string; password: string }): Promise<User> {
       return request("/auth/register/", { method: "POST", body: JSON.stringify(data) });
     },
-    login(data: { username: string; password: string }): Promise<TokenPair> {
-      return request<TokenPair>("/auth/login/", { method: "POST", body: JSON.stringify(data) }).then(
-        (tokens) => {
-          setAccessToken(tokens.access);
-          return tokens;
-        }
-      );
+    async login(data: { username: string; password: string }): Promise<TokenPair> {
+      const tokens = await request<TokenPair>("/auth/login/", { method: "POST", body: JSON.stringify(data) });
+      setAccessToken(tokens.access);
+      await request("/auth/claim-session/", { method: "POST" }).catch(() => {});
+      localStorage.removeItem("shorthand_session_token");
+      return tokens;
     },
     me(): Promise<User> {
       return request("/auth/me/");
     },
-    logout() {
+    async logout() {
+      await request("/auth/logout/", { method: "POST" }).catch(() => {});
       setAccessToken(null);
     },
   },
@@ -88,7 +97,12 @@ export const api = {
     },
   },
   attempts: {
-    create(data: { symbol_letter: string; image_data: string }): Promise<Attempt> {
+    create(data: {
+      symbol_letter: string;
+      image_data: string;
+      word_session?: string;
+      word_position?: number;
+    }): Promise<Attempt> {
       return request("/attempts/", { method: "POST", body: JSON.stringify(data) });
     },
     list(): Promise<{ results: Attempt[]; count: number }> {
@@ -101,6 +115,49 @@ export const api = {
   progress: {
     get(): Promise<ProgressResponse> {
       return request("/progress/");
+    },
+  },
+  leaderboard: {
+    get(): Promise<LeaderboardEntry[]> {
+      return request("/leaderboard/");
+    },
+  },
+  words: {
+    list(params?: { difficulty?: string; topic?: string }): Promise<{ results: WordListItem[]; count: number }> {
+      const search = new URLSearchParams();
+      if (params?.difficulty) search.set("difficulty", params.difficulty);
+      if (params?.topic) search.set("topic", params.topic);
+      const qs = search.toString();
+      return request(`/words/${qs ? `?${qs}` : ""}`);
+    },
+    get(id: string): Promise<Word> {
+      return request(`/words/${id}/`);
+    },
+    topics(): Promise<WordTopic[]> {
+      return request("/word-topics/");
+    },
+  },
+  wordSessions: {
+    create(wordId: string): Promise<WordSession> {
+      return request("/word-sessions/", {
+        method: "POST",
+        body: JSON.stringify({ word_id: wordId }),
+      });
+    },
+    get(id: string): Promise<WordSession> {
+      return request(`/word-sessions/${id}/`);
+    },
+    complete(id: string): Promise<WordSession> {
+      return request(`/word-sessions/${id}/complete/`, { method: "POST" });
+    },
+  },
+  wordProgress: {
+    get(params?: { difficulty?: string; topic?: string }): Promise<WordProgress[]> {
+      const search = new URLSearchParams();
+      if (params?.difficulty) search.set("difficulty", params.difficulty);
+      if (params?.topic) search.set("topic", params.topic);
+      const qs = search.toString();
+      return request(`/word-progress/${qs ? `?${qs}` : ""}`);
     },
   },
 };
