@@ -17,6 +17,7 @@ _shutdown = threading.Event()
 def _poll_loop(worker_id: str, poll_interval: float) -> None:
     logger.info("Worker %s started (poll every %.0fs)", worker_id, poll_interval)
     while not _shutdown.is_set():
+        job = None
         try:
             django.db.close_old_connections()
             job = JobRepository.poll(worker_id)
