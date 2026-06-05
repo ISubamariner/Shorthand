@@ -4,7 +4,6 @@ services:
     runtime: docker
     dockerfilePath: backend/Dockerfile
     dockerContext: backend
-    dockerTarget: prod
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: config.settings.production
@@ -26,7 +25,6 @@ services:
     runtime: docker
     dockerfilePath: backend/Dockerfile
     dockerContext: backend
-    dockerTarget: prod
     dockerCommand: "python manage.py qcluster"
     envVars:
       - key: DJANGO_SETTINGS_MODULE
