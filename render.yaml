@@ -17,8 +17,14 @@ services:
         sync: false
       - key: CORS_ALLOWED_ORIGINS
         sync: false
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
     buildCommand: ""
-    preDeployCommand: "python manage.py migrate"
+    preDeployCommand: "python manage.py migrate && python manage.py seed_admin"
 
 databases:
   - name: shorthand-db
