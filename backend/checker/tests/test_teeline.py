@@ -6,7 +6,8 @@ class TestPhoneticSubstitutions:
         result = decompose("phase")
         letters = "".join(c["letter"] for c in result)
         assert "F" in letters
-        assert "P" not in letters or "H" not in letters
+        assert "P" not in letters
+        assert "H" not in letters
 
     def test_qu_becomes_q(self):
         result = decompose("queen")

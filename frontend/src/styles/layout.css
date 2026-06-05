@@ -201,6 +201,110 @@
   margin: 0 auto;
 }
 
+/* Sample / reference symbol box */
+.sample-box {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 3px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.sample-guide {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed rgba(0, 90, 180, 0.15);
+}
+.sample-guide--baseline {
+  border-top: 1.5px solid rgba(0, 90, 180, 0.35);
+}
+.sample-img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Stat badges (practice page) */
+.stat-badge {
+  font-size: 11px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 2px;
+  padding: 6px 14px;
+}
+.stat-icon {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+/* Streak milestone animation */
+.streak-milestone {
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 12px;
+  animation: milestone-pop 0.4s ease-out;
+}
+@keyframes milestone-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Leaderboard */
+.leaderboard-table {
+  border: 1.5px solid var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.leaderboard-header {
+  display: flex;
+  padding: 10px 16px;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--line);
+}
+.leaderboard-row {
+  display: flex;
+  padding: 10px 16px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.15s;
+}
+.leaderboard-row:last-child { border-bottom: none; }
+.leaderboard-row:hover { background: var(--surface); }
+.leaderboard-row.is-you {
+  background: var(--surface);
+  font-weight: 600;
+}
+.lb-rank { width: 36px; flex-shrink: 0; }
+.lb-name { flex: 1; }
+.lb-score { width: 72px; text-align: right; }
+.lb-streak { width: 72px; text-align: right; }
+.you-badge {
+  display: inline-block;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-left: 6px;
+}
+
 /* Field-level errors and hints */
 .field-error {
   font-size: 11px;
