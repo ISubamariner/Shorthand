@@ -23,8 +23,8 @@ frontend/vite.config.d.ts
 
 # Environment
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
 
 # Data (training images)
 data/
