@@ -104,6 +104,8 @@ export function WordPracticePage() {
     );
     if (next) {
       setActivePosition(next.position);
+    } else {
+      setActivePosition(null);
     }
   }
 
