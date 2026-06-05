@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
-import type { Progress } from "../types";
+import type { Progress, WordProgress } from "../types";
 
 const ALL_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 export function ProgressPage() {
   const navigate = useNavigate();
   const [progress, setProgress] = useState<Progress[]>([]);
+  const [wordProgress, setWordProgress] = useState<WordProgress[]>([]);
   const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [totalScore, setTotalScore] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"symbols" | "words">("symbols");
 
   useEffect(() => {
     api.progress
@@ -17,9 +21,13 @@ export function ProgressPage() {
       .then((data) => {
         setProgress(data.symbols);
         setStreak(data.current_streak);
+        setBestStreak(data.best_streak);
+        setTotalScore(data.total_score);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    api.wordProgress.get().then(setWordProgress);
   }, []);
 
   const totalAttempts = progress.reduce((sum, p) => sum + p.total, 0);
@@ -87,23 +95,40 @@ export function ProgressPage() {
         Symbol <span className="accent">Accuracy</span>
       </div>
 
-      {/* Stats row */}
-      <div className="progress-stats">
+      <div className="progress-tabs">
+        <button
+          className={`tab ${activeTab === "symbols" ? "active" : ""}`}
+          onClick={() => setActiveTab("symbols")}
+        >
+          Symbols
+        </button>
+        <button
+          className={`tab ${activeTab === "words" ? "active" : ""}`}
+          onClick={() => setActiveTab("words")}
+        >
+          Words
+        </button>
+      </div>
+
+      {activeTab === "symbols" && (
+        <>
+          {/* Stats row */}
+          <div className="progress-stats">
         <div className="stat-card">
-          <div className="stat-value">{totalAttempts}</div>
-          <div className="stat-label">Attempts</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{overallAccuracy.toFixed(0)}%</div>
-          <div className="stat-label">Accuracy</div>
+          <div className="stat-value">{totalScore}</div>
+          <div className="stat-label">Score</div>
         </div>
         <div className="stat-card">
           <div className="stat-value">{streak}</div>
           <div className="stat-label">Streak</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{progress.length}</div>
-          <div className="stat-label">Practiced</div>
+          <div className="stat-value">{bestStreak}</div>
+          <div className="stat-label">Best Streak</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{overallAccuracy.toFixed(0)}%</div>
+          <div className="stat-label">Accuracy</div>
         </div>
       </div>
 
@@ -156,6 +181,44 @@ export function ProgressPage() {
           );
         })}
       </div>
+        </>
+      )}
+
+      {activeTab === "words" && (
+        <div className="word-progress-section">
+          <div className="stat-cards">
+            <div className="stat-card">
+              <div className="stat-value">{wordProgress.length}</div>
+              <div className="stat-label">Words Practiced</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">
+                {wordProgress.filter(w => w.perfect_sessions > 0).length}
+              </div>
+              <div className="stat-label">Words Mastered</div>
+            </div>
+          </div>
+          <div className="progress-list">
+            {wordProgress.map((wp) => (
+              <div key={wp.word_id} className="progress-bar-row">
+                <span className="progress-label">{wp.word_text}</span>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${wp.accuracy * 100}%` }}
+                  />
+                </div>
+                <span className="progress-value">
+                  {Math.round(wp.accuracy * 100)}%
+                </span>
+              </div>
+            ))}
+            {wordProgress.length === 0 && (
+              <p className="empty-state">No word practice yet. Try the Words tab!</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
