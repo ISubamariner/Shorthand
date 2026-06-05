@@ -24,6 +24,7 @@ class AttemptSerializer(serializers.ModelSerializer):
             "confidence",
             "is_correct",
             "status",
+            "points",
             "created_at",
         )
         read_only_fields = (
@@ -33,6 +34,7 @@ class AttemptSerializer(serializers.ModelSerializer):
             "confidence",
             "is_correct",
             "status",
+            "points",
             "created_at",
         )
 
@@ -49,6 +51,8 @@ class AttemptSerializer(serializers.ModelSerializer):
 class AttemptCreateSerializer(serializers.Serializer):
     symbol_letter = serializers.CharField(max_length=1)
     image_data = serializers.CharField(max_length=700_000, help_text="Base64-encoded PNG image data")
+    word_session = serializers.UUIDField(required=False, allow_null=True)
+    word_position = serializers.IntegerField(required=False, allow_null=True)
 
 
 class ProgressSerializer(serializers.Serializer):
@@ -66,3 +70,13 @@ class ProgressSerializer(serializers.Serializer):
 class ProgressResponseSerializer(serializers.Serializer):
     symbols = ProgressSerializer(many=True)
     current_streak = serializers.IntegerField()
+    best_streak = serializers.IntegerField()
+    total_score = serializers.IntegerField()
+
+
+class LeaderboardEntrySerializer(serializers.Serializer):
+    rank = serializers.IntegerField()
+    display_name = serializers.CharField()
+    total_score = serializers.IntegerField()
+    best_streak = serializers.IntegerField()
+    is_current_user = serializers.BooleanField()
