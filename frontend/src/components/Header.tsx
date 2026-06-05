@@ -1,9 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { api, getAccessToken } from "../api/client";
 
-const API_BASE = import.meta.env.VITE_API_URL || "/api";
-const ADMIN_URL = API_BASE.replace(/\/api\/?$/, "/admin/");
-
 export function Header() {
   const isLoggedIn = getAccessToken() !== null;
 
@@ -13,46 +10,50 @@ export function Header() {
         <div className="logo">
           Teeline <span className="accent">ML</span>
         </div>
-        {isLoggedIn && (
-          <div className="user-info">
+        <div className="user-info">
+          {isLoggedIn ? (
             <a
               href="#"
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.preventDefault();
-                api.auth.logout();
-                window.location.href = "/login";
+                await api.auth.logout();
+                window.location.href = "/";
               }}
             >
               logout
             </a>
-          </div>
-        )}
-      </div>
-      {isLoggedIn && (
-        <div className="tabs">
-          <NavLink
-            to="/"
-            className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
-            end
-          >
-            Practice
-          </NavLink>
-          <NavLink
-            to="/progress"
-            className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
-          >
-            Progress
-          </NavLink>
-          <a
-            href={ADMIN_URL}
-            className="tab"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Admin
-          </a>
+          ) : (
+            <NavLink to="/login">login</NavLink>
+          )}
         </div>
-      )}
+      </div>
+      <div className="tabs">
+        <NavLink
+          to="/"
+          className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
+          end
+        >
+          Practice
+        </NavLink>
+        <NavLink
+          to="/words"
+          className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
+        >
+          Words
+        </NavLink>
+        <NavLink
+          to="/progress"
+          className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
+        >
+          Progress
+        </NavLink>
+        <NavLink
+          to="/leaderboard"
+          className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
+        >
+          Leaderboard
+        </NavLink>
+      </div>
     </div>
   );
 }
