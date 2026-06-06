@@ -104,6 +104,23 @@ export function CreditsPage() {
           </li>
           <li>
             <a
+              href="https://doi.org/10.35940/ijitee.D1569.029420"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Analysis of Teeline Shorthand Recognition using Machine Learning
+              and Deep Learning Techniques
+            </a>{" "}
+            by Mr. Shivaprakash, Dr. Vishwanath C. Burkpalli, Dr. B. S. Anami —{" "}
+            <em>
+              International Journal of Innovative Technology and Exploring
+              Engineering
+            </em>
+            , Vol. 9, Issue 4, pp. 2133–2138 (2020). Reference for ML approach
+            and decomposition rule development.
+          </li>
+          <li>
+            <a
               href="https://css-tricks.com/how-to-get-handwriting-animation-with-irregular-svg-strokes/"
               target="_blank"
               rel="noopener noreferrer"
