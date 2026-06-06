@@ -56,6 +56,23 @@ export function FeedbackPanel({
               />
             </div>
           </div>
+          {isCorrect && attempt.points > 0 && (
+            <div style={{ textAlign: "center", minWidth: 60 }}>
+              <div className="label-row" style={{ justifyContent: "center" }}>
+                Points
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-heading)",
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: "var(--success)",
+                }}
+              >
+                +{attempt.points}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

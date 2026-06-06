@@ -6,10 +6,17 @@ import { FeedbackPanel } from "../components/FeedbackPanel";
 import { useJobPoller } from "../hooks/useJobPoller";
 import type { Attempt, Symbol } from "../types";
 
+function pickRandom(syms: Symbol[], exclude?: Symbol | null): Symbol {
+  const pool = exclude ? syms.filter((s) => s.letter !== exclude.letter) : syms;
+  const source = pool.length ? pool : syms;
+  return source[Math.floor(Math.random() * source.length)]!;
+}
+
 export function PracticePage() {
   const [searchParams] = useSearchParams();
   const [symbols, setSymbols] = useState<Symbol[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState<Symbol | null>(null);
+  const [randomMode, setRandomMode] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [canvasResetKey, setCanvasResetKey] = useState(0);
@@ -27,8 +34,13 @@ export function PracticePage() {
       const preselect = searchParams.get("symbol");
       if (preselect) {
         const match = syms.find((s) => s.letter === preselect.toUpperCase());
-        if (match) setSelectedSymbol(match);
+        if (match) {
+          setSelectedSymbol(match);
+          setRandomMode(false);
+          return;
+        }
       }
+      if (syms.length) setSelectedSymbol(pickRandom(syms));
     }).catch(() => setSubmitError("Failed to load symbols"));
 
     api.progress.get().then((p) => {
@@ -56,9 +68,12 @@ export function PracticePage() {
 
   function handleNext() {
     if (!symbols.length || !selectedSymbol) return;
-    const idx = symbols.findIndex((s) => s.letter === selectedSymbol.letter);
-    const next = symbols[(idx + 1) % symbols.length];
-    setSelectedSymbol(next ?? null);
+    if (randomMode) {
+      setSelectedSymbol(pickRandom(symbols, selectedSymbol));
+    } else {
+      const idx = symbols.findIndex((s) => s.letter === selectedSymbol.letter);
+      setSelectedSymbol(symbols[(idx + 1) % symbols.length]!);
+    }
     poller.stopPolling();
     setCanvasResetKey((k) => k + 1);
   }
@@ -143,23 +158,40 @@ export function PracticePage() {
             )}
           </div>
         </div>
-        <select
-          className="select"
-          value={selectedSymbol?.letter ?? ""}
-          onChange={(e) => {
-            const s = symbols.find((sym) => sym.letter === e.target.value);
-            setSelectedSymbol(s ?? null);
-            poller.stopPolling();
-            setCanvasResetKey((k) => k + 1);
-          }}
-        >
-          <option value="">Choose...</option>
-          {symbols.map((s) => (
-            <option key={s.letter} value={s.letter}>
-              {s.letter} — {s.name}
-            </option>
-          ))}
-        </select>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button
+            className={`btn ${randomMode ? "btn-success" : "btn-retry"}`}
+            style={{ fontSize: 12, padding: "6px 12px", whiteSpace: "nowrap" }}
+            onClick={() => {
+              setRandomMode((prev) => !prev);
+              if (!randomMode && symbols.length) {
+                setSelectedSymbol(pickRandom(symbols, selectedSymbol));
+                poller.stopPolling();
+                setCanvasResetKey((k) => k + 1);
+              }
+            }}
+          >
+            {randomMode ? "Random" : "Sequential"}
+          </button>
+          <select
+            className="select"
+            value={selectedSymbol?.letter ?? ""}
+            onChange={(e) => {
+              const s = symbols.find((sym) => sym.letter === e.target.value);
+              setSelectedSymbol(s ?? null);
+              setRandomMode(false);
+              poller.stopPolling();
+              setCanvasResetKey((k) => k + 1);
+            }}
+          >
+            <option value="">Choose...</option>
+            {symbols.map((s) => (
+              <option key={s.letter} value={s.letter}>
+                {s.letter} — {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Canvas */}

@@ -127,8 +127,9 @@ def record_score(attempt):
 
         if attempt.is_correct:
             new_streak = stats.current_streak + 1
-            bonus = 5 if new_streak % 5 == 0 else 0
-            points = 10 + bonus
+            streak_bonus = 5 if new_streak % 5 == 0 else 0
+            confidence_bonus = round((attempt.confidence or 0) * 5)
+            points = 10 + streak_bonus + confidence_bonus
 
             stats.current_streak = new_streak
             stats.total_score = F("total_score") + points
