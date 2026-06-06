@@ -8,6 +8,7 @@ from rest_framework.test import APIRequestFactory
 from admin_api.models import AuditLog
 from admin_api.permissions import IsAdminUser
 from admin_api.services import log_audit
+from jobs.models import Job
 
 
 class IsAdminUserPermissionTest(TestCase):
@@ -134,4 +135,60 @@ class UserDetailViewTest(AdminViewTestBase):
     def test_non_admin_denied(self):
         self.client.force_authenticate(user=self.user)
         response = self.client.get(f"/api/admin/users/{self.admin.id}/")
+        self.assertEqual(response.status_code, 403)
+
+
+class JobViewTest(AdminViewTestBase):
+    def test_list_jobs(self):
+        Job.objects.create(type="process_attempt", status="pending")
+        response = self.client.get("/api/admin/jobs/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+
+    def test_filter_jobs_by_status(self):
+        Job.objects.create(type="process_attempt", status="pending")
+        Job.objects.create(type="process_attempt", status="failed")
+        response = self.client.get("/api/admin/jobs/?status=failed")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+
+    def test_retry_failed_job(self):
+        job = Job.objects.create(type="process_attempt", status="failed", attempts=1)
+        response = self.client.post(f"/api/admin/jobs/{job.id}/retry/")
+        self.assertEqual(response.status_code, 200)
+        job.refresh_from_db()
+        self.assertEqual(job.status, "pending")
+        self.assertTrue(AuditLog.objects.filter(action="job.retry").exists())
+
+    def test_retry_non_failed_job_rejected(self):
+        job = Job.objects.create(type="process_attempt", status="completed")
+        response = self.client.post(f"/api/admin/jobs/{job.id}/retry/")
+        self.assertEqual(response.status_code, 400)
+
+    def test_cancel_pending_job(self):
+        job = Job.objects.create(type="process_attempt", status="pending")
+        response = self.client.post(f"/api/admin/jobs/{job.id}/cancel/")
+        self.assertEqual(response.status_code, 200)
+        job.refresh_from_db()
+        self.assertEqual(job.status, "dead")
+        self.assertTrue(AuditLog.objects.filter(action="job.cancel").exists())
+
+
+class AuditLogViewTest(AdminViewTestBase):
+    def test_list_audit_logs(self):
+        log_audit(actor=self.admin, action="user.update", target_type="user", target_id="1")
+        response = self.client.get("/api/admin/audit-log/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+
+    def test_filter_by_action(self):
+        log_audit(actor=self.admin, action="user.update", target_type="user", target_id="1")
+        log_audit(actor=self.admin, action="content.symbol.create", target_type="symbol", target_id="2")
+        response = self.client.get("/api/admin/audit-log/?action=user.update")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+
+    def test_non_admin_denied(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/admin/audit-log/")
         self.assertEqual(response.status_code, 403)
