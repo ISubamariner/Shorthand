@@ -65,3 +65,73 @@ class MakeAdminCommandTest(TestCase):
         err = StringIO()
         call_command("make_admin", "nobody", stdout=out, stderr=err)
         self.assertIn("not found", err.getvalue())
+
+
+from rest_framework.test import APIClient
+
+
+class AdminViewTestBase(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            "admin", email="admin@test.com", password="testpass1234", is_staff=True
+        )
+        self.user = User.objects.create_user(
+            "regular", email="user@test.com", password="testpass1234"
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.admin)
+
+
+class DashboardStatsViewTest(AdminViewTestBase):
+    def test_returns_stats(self):
+        response = self.client.get("/api/admin/dashboard/stats/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("user_count", response.data)
+        self.assertIn("attempt_count", response.data)
+
+    def test_non_admin_denied(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/admin/dashboard/stats/")
+        self.assertEqual(response.status_code, 403)
+
+
+class UserListViewTest(AdminViewTestBase):
+    def test_lists_users(self):
+        response = self.client.get("/api/admin/users/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 2)
+
+    def test_search_by_username(self):
+        response = self.client.get("/api/admin/users/?search=admin")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["username"], "admin")
+
+    def test_non_admin_denied(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/admin/users/")
+        self.assertEqual(response.status_code, 403)
+
+
+class UserDetailViewTest(AdminViewTestBase):
+    def test_get_user_detail(self):
+        response = self.client.get(f"/api/admin/users/{self.user.id}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["username"], "regular")
+
+    def test_patch_user(self):
+        response = self.client.patch(
+            f"/api/admin/users/{self.user.id}/",
+            {"is_active": False},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_active)
+        audit = AuditLog.objects.get()
+        self.assertEqual(audit.action, "user.update")
+
+    def test_non_admin_denied(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(f"/api/admin/users/{self.admin.id}/")
+        self.assertEqual(response.status_code, 403)
