@@ -104,6 +104,12 @@ export function Header() {
         >
           About
         </NavLink>
+        <NavLink
+          to="/credits"
+          className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
+        >
+          Credits
+        </NavLink>
         {isStaff && (
           <NavLink
             to="/admin"
