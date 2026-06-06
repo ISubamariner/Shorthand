@@ -98,6 +98,12 @@ export function Header() {
         >
           Leaderboard
         </NavLink>
+        <NavLink
+          to="/about"
+          className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
+        >
+          About
+        </NavLink>
         {isStaff && (
           <NavLink
             to="/admin"

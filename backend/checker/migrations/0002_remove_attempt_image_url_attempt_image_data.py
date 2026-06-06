@@ -2,6 +2,9 @@ from django.db import migrations, models
 
 
 def drop_image_add_image_data(apps, schema_editor):
+    vendor = schema_editor.connection.vendor
+    if vendor == "sqlite":
+        return
     schema_editor.execute(
         "ALTER TABLE checker_attempt DROP COLUMN IF EXISTS image_url;"
     )
