@@ -192,3 +192,74 @@ class AuditLogViewTest(AdminViewTestBase):
         self.client.force_authenticate(user=self.user)
         response = self.client.get("/api/admin/audit-log/")
         self.assertEqual(response.status_code, 403)
+
+
+from checker.models import Symbol, Word, WordTopic
+
+
+class SymbolContentViewTest(AdminViewTestBase):
+    def test_list_symbols(self):
+        Symbol.objects.create(letter="a", name="Alpha")
+        response = self.client.get("/api/admin/content/symbols/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+
+    def test_create_symbol(self):
+        response = self.client.post(
+            "/api/admin/content/symbols/",
+            {"letter": "b", "name": "Bravo"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(Symbol.objects.filter(letter="b").exists())
+        self.assertTrue(AuditLog.objects.filter(action="content.symbol.create").exists())
+
+    def test_delete_symbol(self):
+        symbol = Symbol.objects.create(letter="c", name="Charlie")
+        response = self.client.delete(f"/api/admin/content/symbols/{symbol.id}/")
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(Symbol.objects.filter(id=symbol.id).exists())
+        self.assertTrue(AuditLog.objects.filter(action="content.symbol.delete").exists())
+
+
+class WordContentViewTest(AdminViewTestBase):
+    def test_list_words(self):
+        topic = WordTopic.objects.create(name="Greetings", slug="greetings")
+        Word.objects.create(text="hello", teeline_letters="hl", difficulty="beginner", topic=topic)
+        response = self.client.get("/api/admin/content/words/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+
+
+class AnalyticsViewTest(AdminViewTestBase):
+    def test_usage_stats(self):
+        response = self.client.get("/api/admin/analytics/usage/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("daily", response.data)
+
+    def test_non_admin_denied(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/admin/analytics/usage/")
+        self.assertEqual(response.status_code, 403)
+
+
+class SystemSettingsViewTest(AdminViewTestBase):
+    def test_get_settings(self):
+        from admin_api.models import SystemSetting
+        SystemSetting.objects.create(key="maintenance_mode", value=False, updated_by=self.admin)
+        response = self.client.get("/api/admin/settings/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+
+    def test_patch_settings(self):
+        from admin_api.models import SystemSetting
+        setting = SystemSetting.objects.create(key="maintenance_mode", value=False, updated_by=self.admin)
+        response = self.client.patch(
+            "/api/admin/settings/",
+            [{"key": "maintenance_mode", "value": True}],
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        setting.refresh_from_db()
+        self.assertTrue(setting.value)
+        self.assertTrue(AuditLog.objects.filter(action="settings.update").exists())
