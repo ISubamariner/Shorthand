@@ -38,21 +38,29 @@ function getSessionToken(): string {
   return token;
 }
 
+let refreshPromise: Promise<boolean> | null = null;
+
 async function tryRefresh(): Promise<boolean> {
   if (!refreshToken) return false;
-  try {
-    const res = await fetch(`${BASE_URL}/auth/refresh/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh: refreshToken }),
-    });
-    if (!res.ok) return false;
-    const data = await res.json();
-    setTokens(data.access);
-    return true;
-  } catch {
-    return false;
-  }
+  if (refreshPromise) return refreshPromise;
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/auth/refresh/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh: refreshToken }),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      setTokens(data.access);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+  return refreshPromise;
 }
 
 async function request<T>(
@@ -83,6 +91,11 @@ async function request<T>(
         if (retry.status === 204) return undefined as T;
         return retry.json();
       }
+      if (retry.status === 401) {
+        setTokens(null, null);
+      }
+      const retryBody = await retry.json().catch(() => ({}));
+      throw new ApiError(retry.status, retryBody);
     }
     setTokens(null, null);
   } else if (response.status === 401 && accessToken) {

@@ -27,9 +27,9 @@ class SystemSettingsView(APIView):
         updated = []
         for item in request.data:
             key = item.get("key")
-            value = item.get("value")
-            if not key or value is None:
+            if not key or "value" not in item:
                 continue
+            value = item["value"]
             try:
                 setting = SystemSetting.objects.select_for_update().get(key=key)
                 before = setting.value

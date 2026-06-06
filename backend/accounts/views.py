@@ -1,5 +1,9 @@
 import logging
 
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -53,17 +57,34 @@ class MeView(APIView):
                     {"fields": {"current_password": "Current password is incorrect."}},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            if len(new_password) < 8:
+            try:
+                validate_password(new_password, user)
+            except ValidationError as e:
                 return Response(
-                    {"fields": {"new_password": "Password must be at least 8 characters."}},
+                    {"fields": {"new_password": e.messages[0]}},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            user.set_password(new_password)
 
         if email is not None:
-            user.email = email
+            try:
+                validate_email(email)
+            except ValidationError:
+                return Response(
+                    {"fields": {"email": "Enter a valid email address."}},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            user.email = email.strip().lower()
 
-        user.save()
+        if new_password:
+            user.set_password(new_password)
+
+        try:
+            user.save()
+        except IntegrityError:
+            return Response(
+                {"fields": {"email": "This email is already in use."}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return Response(UserSerializer(user).data)
 
 
