@@ -39,6 +39,22 @@ class Symbol(models.Model):
         return f"{self.letter} — {self.name}"
 
 
+class SpecialOutline(TimestampedModel):
+    symbol = models.ForeignKey(
+        Symbol,
+        on_delete=models.CASCADE,
+        related_name="special_outlines",
+    )
+    meaning = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = [("symbol", "meaning")]
+        ordering = ["meaning"]
+
+    def __str__(self):
+        return f"{self.symbol.letter} → {self.meaning}"
+
+
 class Attempt(TimestampedModel):
     class Status(models.TextChoices):
         PENDING = "pending"
