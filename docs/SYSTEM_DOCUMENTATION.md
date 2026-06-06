@@ -195,11 +195,11 @@ Shorthand/
 | symbol | FK → Symbol | on_delete CASCADE |
 | word_session | FK → WordAttemptSession | nullable, on_delete CASCADE |
 | word_position | IntegerField | nullable |
-| image_data | BinaryField | |
+| image_data | BinaryField | blank=True, default=b"" |
 | predicted_label | CharField(1) | nullable |
 | confidence | FloatField | nullable |
 | is_correct | BooleanField | nullable |
-| status | CharField | choices: pending, processing, completed, failed |
+| status | CharField | choices: pending, processing, completed, failed; default=pending |
 | points | IntegerField | default=0 |
 | created_at | DateTimeField | auto_now_add |
 | updated_at | DateTimeField | auto_now |
@@ -209,8 +209,8 @@ Shorthand/
 #### checker.UserStats (extends TimestampedModel)
 | Field | Type | Constraints |
 |-------|------|------------|
-| user | OneToOneField → User | nullable |
-| anonymous_session | OneToOneField → AnonymousSession | nullable |
+| user | OneToOneField → User | nullable, on_delete CASCADE |
+| anonymous_session | OneToOneField → AnonymousSession | nullable, on_delete CASCADE |
 | total_score | IntegerField | default=0 |
 | current_streak | IntegerField | default=0 |
 | best_streak | IntegerField | default=0 |
@@ -236,9 +236,9 @@ Shorthand/
 | Field | Type | Constraints |
 |-------|------|------------|
 | word | FK → Word | on_delete CASCADE |
-| user | FK → User | nullable |
-| anonymous_session | FK → AnonymousSession | nullable |
-| status | CharField | choices: in_progress, completed, abandoned |
+| user | FK → User | nullable, on_delete CASCADE |
+| anonymous_session | FK → AnonymousSession | nullable, on_delete CASCADE |
+| status | CharField | choices: in_progress, completed, abandoned; default=in_progress |
 | letters_correct | IntegerField | default=0 |
 | letters_total | IntegerField | default=0 |
 | points_awarded | IntegerField | default=0 |
@@ -253,7 +253,7 @@ Shorthand/
 | user | FK → User | nullable, on_delete SET_NULL |
 | correlation_key | CharField(255) | unique, nullable |
 | payload | JSONField | default=dict |
-| status | CharField | choices: pending, running, completed, failed, dead |
+| status | CharField | choices: pending, running, completed, failed, dead; default=pending |
 | priority | IntegerField | default=0 |
 | attempts | IntegerField | default=0 |
 | max_attempts | IntegerField | default=3 |
@@ -341,7 +341,7 @@ All admin endpoints require `IsAuthenticated` + `is_staff`.
 | POST | `/jobs/:pk/retry/` | Retry failed/dead job |
 | POST | `/jobs/:pk/cancel/` | Cancel pending job |
 | GET | `/audit-log/` | Audit log (filter: action, actor, target_type) |
-| GET, POST | `/settings/` | System settings CRUD |
+| GET, PATCH | `/settings/` | System settings CRUD |
 
 ### Service Layer
 

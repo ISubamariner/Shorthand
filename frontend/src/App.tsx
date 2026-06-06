@@ -11,6 +11,7 @@ import { PracticePage } from "./pages/PracticePage";
 import { ProgressPage } from "./pages/ProgressPage";
 import { SettingsPage as UserSettingsPage } from "./pages/SettingsPage";
 import { AboutPage } from "./pages/AboutPage";
+import { CreditsPage } from "./pages/CreditsPage";
 import { WordPracticePage } from "./pages/WordPracticePage";
 import { AdminRoute } from "./components/admin/AdminRoute";
 
@@ -80,6 +81,7 @@ export function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/settings" element={<UserSettingsPage />} />
                 <Route path="/about" element={<AboutPage />} />
+                <Route path="/credits" element={<CreditsPage />} />
               </Routes>
             </>
           }

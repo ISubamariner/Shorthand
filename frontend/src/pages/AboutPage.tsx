@@ -144,6 +144,11 @@ export function AboutPage() {
             Start Practicing
           </Link>
         </div>
+        <p className="about-hosting-note" style={{ marginTop: 16 }}>
+          <Link to="/credits" style={{ color: "var(--accent)" }}>
+            Credits &amp; Attribution
+          </Link>
+        </p>
       </section>
     </div>
   );

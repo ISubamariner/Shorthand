@@ -530,3 +530,205 @@
   line-height: 1.7;
   margin-bottom: 8px;
 }
+
+/* Credits Page */
+.credits-page {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+.credits-hero {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--ruled);
+}
+.credits-hero h1 {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 12px;
+}
+.credits-subtitle {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.credits-section {
+  margin-bottom: 36px;
+}
+.credits-section h2 {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ruled);
+}
+.credits-intro {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0 0 16px;
+}
+.credits-card {
+  background: var(--paper);
+  border: 1px solid var(--ruled);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+.credits-card--featured {
+  border-left: 4px solid var(--accent);
+}
+.credits-card h3 {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.credits-card h3 a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent);
+}
+.credits-card h3 a:hover {
+  color: var(--accent);
+}
+.credits-card p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0 0 8px;
+}
+.credits-card p:last-child {
+  margin-bottom: 0;
+}
+.credits-card a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.credits-card a:hover {
+  text-decoration: underline;
+}
+.credits-license {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.credits-usage {
+  font-size: 13px !important;
+  color: var(--ink) !important;
+  background: color-mix(in srgb, var(--ruled) 40%, transparent);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 12px !important;
+}
+.credits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.credits-list li {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+  padding: 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ruled) 50%, transparent);
+}
+.credits-list li:last-child {
+  border-bottom: none;
+}
+.credits-list a {
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent);
+}
+.credits-list a:hover {
+  color: var(--accent);
+}
+.credits-deps {
+  background: var(--paper);
+  border: 1px solid var(--ruled);
+  border-radius: 8px;
+  padding: 16px 24px;
+  margin-bottom: 16px;
+}
+.credits-deps h3 {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+.credits-deps ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.credits-deps li {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  padding: 4px 0;
+}
+.credits-deps a {
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: none;
+}
+.credits-deps a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.credits-deps code {
+  font-family: var(--font-body);
+  font-size: 12px;
+  background: color-mix(in srgb, var(--ruled) 40%, transparent);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.credits-license-inline {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--accent);
+  opacity: 0.8;
+}
+.credits-footer {
+  text-align: center;
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 2px solid var(--ink);
+}
+.credits-footer p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0 0 12px;
+}
+.credits-footer a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.credits-footer a:hover {
+  text-decoration: underline;
+}
+.credits-note {
+  font-size: 12px !important;
+  color: var(--muted) !important;
+  opacity: 0.7;
+  max-width: 520px;
+  margin: 16px auto 0 !important;
+}
