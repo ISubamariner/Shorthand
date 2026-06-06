@@ -4,6 +4,7 @@ import "./styles/tokens.css";
 import "./styles/components.css";
 import "./styles/layout.css";
 import "./styles/admin.css";
+import { BackendLoader } from "./components/BackendLoader";
 import { Header } from "./components/Header";
 import { LeaderboardPage } from "./pages/LeaderboardPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -45,6 +46,7 @@ const SettingsPage = lazy(() =>
 
 export function App() {
   return (
+    <BackendLoader>
     <BrowserRouter>
       <Routes>
         <Route
@@ -88,5 +90,6 @@ export function App() {
         />
       </Routes>
     </BrowserRouter>
+    </BackendLoader>
   );
 }
