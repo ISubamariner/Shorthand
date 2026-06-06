@@ -19,9 +19,18 @@ class UserScopedManager(models.Manager):
 
 
 class Symbol(models.Model):
-    letter = models.CharField(max_length=1, unique=True)
+    class SymbolType(models.TextChoices):
+        LETTER = "letter"
+        GROUPING = "grouping"
+
+    letter = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=50)
     reference_image_url = models.URLField(blank=True, default="")
+    symbol_type = models.CharField(
+        max_length=8,
+        choices=SymbolType.choices,
+        default=SymbolType.LETTER,
+    )
 
     class Meta:
         ordering = ["letter"]
@@ -65,7 +74,7 @@ class Attempt(TimestampedModel):
     )
     word_position = models.IntegerField(null=True, blank=True)
     image_data = models.BinaryField(blank=True, default=b"")
-    predicted_label = models.CharField(max_length=1, null=True, blank=True)
+    predicted_label = models.CharField(max_length=10, null=True, blank=True)
     confidence = models.FloatField(null=True, blank=True)
     is_correct = models.BooleanField(null=True, blank=True)
     status = models.CharField(
