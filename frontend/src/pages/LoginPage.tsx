@@ -93,14 +93,13 @@ export function LoginPage() {
 
           {isRegistering && (
             <div className="form-group">
-              <label>Email</label>
+              <label>Email <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span></label>
               <input
                 className={`input ${fieldErrors.email ? "input-error" : ""}`}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                required
               />
               {fieldErrors.email && (
                 <div className="field-error">{fieldErrors.email}</div>
