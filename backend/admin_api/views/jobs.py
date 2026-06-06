@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
@@ -31,9 +32,10 @@ class JobDetailView(RetrieveAPIView):
 class JobRetryView(APIView):
     permission_classes = [IsAdminUser]
 
+    @transaction.atomic
     def post(self, request, pk):
         try:
-            job = Job.objects.get(pk=pk)
+            job = Job.objects.select_for_update().get(pk=pk)
         except Job.DoesNotExist:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -60,9 +62,10 @@ class JobRetryView(APIView):
 class JobCancelView(APIView):
     permission_classes = [IsAdminUser]
 
+    @transaction.atomic
     def post(self, request, pk):
         try:
-            job = Job.objects.get(pk=pk)
+            job = Job.objects.select_for_update().get(pk=pk)
         except Job.DoesNotExist:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 

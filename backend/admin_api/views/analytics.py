@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.contrib.auth.models import User
 from django.db.models import Count
 from django.db.models.functions import TruncDate
 from django.utils import timezone
@@ -10,11 +11,19 @@ from admin_api.permissions import IsAdminUser
 from checker.models import Attempt
 
 
+def _parse_days(request, default=30):
+    try:
+        days = int(request.query_params.get("days", default))
+        return max(1, min(days, 365))
+    except (ValueError, TypeError):
+        return default
+
+
 class UsageStatsView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        days = int(request.query_params.get("days", 30))
+        days = _parse_days(request)
         since = timezone.now() - timedelta(days=days)
         daily = (
             Attempt.objects.filter(created_at__gte=since)
@@ -33,9 +42,7 @@ class RetentionStatsView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        from django.contrib.auth.models import User
-
-        days = int(request.query_params.get("days", 30))
+        days = _parse_days(request)
         since = timezone.now() - timedelta(days=days)
         total = User.objects.count()
         active = User.objects.filter(last_login__gte=since).count()

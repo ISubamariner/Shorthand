@@ -1,11 +1,11 @@
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 
 from admin_api.permissions import IsAdminUser
 from admin_api.serializers import AdminSymbolSerializer, AdminWordSerializer
 from admin_api.services import log_audit
-from checker.models import Symbol, Word
+from checker.models import Attempt, Symbol, Word
 
 
 class SymbolListCreateView(ListCreateAPIView):
@@ -42,6 +42,10 @@ class SymbolDetailView(RetrieveUpdateDestroyAPIView):
         )
 
     def perform_destroy(self, instance):
+        if Attempt.objects.filter(symbol=instance).exists():
+            raise serializers.ValidationError(
+                "Cannot delete symbol with existing attempts."
+            )
         data = AdminSymbolSerializer(instance).data
         pk = instance.pk
         instance.delete()
@@ -88,6 +92,10 @@ class WordDetailView(RetrieveUpdateDestroyAPIView):
         )
 
     def perform_destroy(self, instance):
+        if instance.sessions.exists():
+            raise serializers.ValidationError(
+                "Cannot delete word with existing practice sessions."
+            )
         data = AdminWordSerializer(instance).data
         pk = instance.pk
         instance.delete()

@@ -22,7 +22,8 @@ class AuditLog(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.actor} → {self.action} ({self.target_type}:{self.target_id})"
+        actor = self.actor.username if self.actor else "System"
+        return f"{actor} → {self.action} ({self.target_type}:{self.target_id})"
 
 
 class SystemSetting(models.Model):
