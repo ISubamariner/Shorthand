@@ -5,10 +5,24 @@ import type {
 
 const BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
-let accessToken: string | null = null;
+let accessToken: string | null = localStorage.getItem("shorthand_access_token");
+let refreshToken: string | null = localStorage.getItem("shorthand_refresh_token");
 
-function setAccessToken(token: string | null) {
-  accessToken = token;
+function setTokens(access: string | null, refresh?: string | null) {
+  accessToken = access;
+  if (access) {
+    localStorage.setItem("shorthand_access_token", access);
+  } else {
+    localStorage.removeItem("shorthand_access_token");
+  }
+  if (refresh !== undefined) {
+    refreshToken = refresh;
+    if (refresh) {
+      localStorage.setItem("shorthand_refresh_token", refresh);
+    } else {
+      localStorage.removeItem("shorthand_refresh_token");
+    }
+  }
 }
 
 export function getAccessToken(): string | null {
@@ -22,6 +36,23 @@ function getSessionToken(): string {
     localStorage.setItem("shorthand_session_token", token);
   }
   return token;
+}
+
+async function tryRefresh(): Promise<boolean> {
+  if (!refreshToken) return false;
+  try {
+    const res = await fetch(`${BASE_URL}/auth/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    setTokens(data.access);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function request<T>(
@@ -43,8 +74,19 @@ async function request<T>(
     headers,
   });
 
-  if (response.status === 401 && accessToken) {
-    setAccessToken(null);
+  if (response.status === 401 && accessToken && refreshToken) {
+    const refreshed = await tryRefresh();
+    if (refreshed) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+      const retry = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+      if (retry.ok) {
+        if (retry.status === 204) return undefined as T;
+        return retry.json();
+      }
+    }
+    setTokens(null, null);
+  } else if (response.status === 401 && accessToken) {
+    setTokens(null, null);
   }
 
   if (!response.ok) {
@@ -75,7 +117,7 @@ export const api = {
     },
     async login(data: { username: string; password: string }): Promise<TokenPair> {
       const tokens = await request<TokenPair>("/auth/login/", { method: "POST", body: JSON.stringify(data) });
-      setAccessToken(tokens.access);
+      setTokens(tokens.access, tokens.refresh);
       await request("/auth/claim-session/", { method: "POST" }).catch(() => {});
       localStorage.removeItem("shorthand_session_token");
       return tokens;
@@ -83,9 +125,12 @@ export const api = {
     me(): Promise<User> {
       return request("/auth/me/");
     },
+    updateMe(data: { email?: string; current_password?: string; new_password?: string }): Promise<User> {
+      return request("/auth/me/", { method: "PATCH", body: JSON.stringify(data) });
+    },
     async logout() {
       await request("/auth/logout/", { method: "POST" }).catch(() => {});
-      setAccessToken(null);
+      setTokens(null, null);
     },
   },
   symbols: {

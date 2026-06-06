@@ -41,6 +41,31 @@ class MeView(APIView):
     def get(self, request):
         return Response(UserSerializer(request.user).data)
 
+    def patch(self, request):
+        user = request.user
+        email = request.data.get("email")
+        new_password = request.data.get("new_password")
+        current_password = request.data.get("current_password")
+
+        if new_password:
+            if not current_password or not user.check_password(current_password):
+                return Response(
+                    {"fields": {"current_password": "Current password is incorrect."}},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if len(new_password) < 8:
+                return Response(
+                    {"fields": {"new_password": "Password must be at least 8 characters."}},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            user.set_password(new_password)
+
+        if email is not None:
+            user.email = email
+
+        user.save()
+        return Response(UserSerializer(user).data)
+
 
 class ClaimSessionView(APIView):
     def post(self, request):

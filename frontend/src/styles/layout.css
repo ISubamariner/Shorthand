@@ -26,6 +26,61 @@
 }
 .user-info a:hover { color: var(--ink); }
 
+/* User dropdown */
+.user-dropdown {
+  position: relative;
+}
+.user-dropdown-toggle {
+  background: none;
+  border: none;
+  font-size: 11px;
+  font-family: var(--font-body);
+  color: var(--ink);
+  cursor: pointer;
+  padding: 4px 0;
+  font-weight: 600;
+}
+.user-dropdown-toggle:hover {
+  color: var(--accent);
+}
+.user-dropdown-caret {
+  font-size: 9px;
+  margin-left: 2px;
+  opacity: 0.5;
+}
+.user-dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: 3px;
+  min-width: 140px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  overflow: hidden;
+}
+.user-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 11px;
+  font-family: var(--font-body);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.user-dropdown-item:hover {
+  background: var(--surface);
+}
+.user-dropdown-item + .user-dropdown-item {
+  border-top: 1px solid var(--line);
+}
+
 /* Tabs */
 .tabs {
   display: flex;

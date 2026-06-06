@@ -9,6 +9,7 @@ import { LeaderboardPage } from "./pages/LeaderboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PracticePage } from "./pages/PracticePage";
 import { ProgressPage } from "./pages/ProgressPage";
+import { SettingsPage as UserSettingsPage } from "./pages/SettingsPage";
 import { WordPracticePage } from "./pages/WordPracticePage";
 import { AdminRoute } from "./components/admin/AdminRoute";
 
@@ -76,6 +77,7 @@ export function App() {
                 <Route path="/progress" element={<ProgressPage />} />
                 <Route path="/leaderboard" element={<LeaderboardPage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/settings" element={<UserSettingsPage />} />
               </Routes>
             </>
           }

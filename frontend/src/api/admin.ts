@@ -11,35 +11,7 @@ import type {
   SystemSetting,
   UsageStats,
 } from "../types/admin";
-
-const BASE_URL = import.meta.env.VITE_API_URL || "/api";
-
-async function adminRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const { getAccessToken } = await import("./client");
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-    ...(options.headers as Record<string, string>),
-  };
-
-  const response = await fetch(`${BASE_URL}/admin${path}`, { ...options, headers });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(`Admin API error ${response.status}: ${JSON.stringify(body)}`);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json();
-}
+import { adminRequest } from "./client";
 
 export const adminApi = {
   dashboard: {

@@ -1,16 +1,35 @@
-import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { api, getAccessToken } from "../api/client";
 
 export function Header() {
   const isLoggedIn = getAccessToken() !== null;
+  const [username, setUsername] = useState<string | null>(null);
   const [isStaff, setIsStaff] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isLoggedIn) {
-      api.auth.me().then((u) => setIsStaff(u.is_staff)).catch(() => {});
+      api.auth.me().then((u) => {
+        setUsername(u.username);
+        setIsStaff(u.is_staff);
+      }).catch(() => {});
     }
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [dropdownOpen]);
 
   return (
     <div className="header">
@@ -19,17 +38,35 @@ export function Header() {
           Teeline <span className="accent">ML</span>
         </div>
         <div className="user-info">
-          {isLoggedIn ? (
-            <a
-              href="#"
-              onClick={async (e) => {
-                e.preventDefault();
-                await api.auth.logout();
-                window.location.href = "/";
-              }}
-            >
-              logout
-            </a>
+          {isLoggedIn && username ? (
+            <div className="user-dropdown" ref={dropdownRef}>
+              <button
+                className="user-dropdown-toggle"
+                onClick={() => setDropdownOpen((v) => !v)}
+              >
+                {username} <span className="user-dropdown-caret">&#9662;</span>
+              </button>
+              {dropdownOpen && (
+                <div className="user-dropdown-menu">
+                  <button
+                    className="user-dropdown-item"
+                    onClick={() => { setDropdownOpen(false); navigate("/settings"); }}
+                  >
+                    Settings
+                  </button>
+                  <button
+                    className="user-dropdown-item"
+                    onClick={async () => {
+                      setDropdownOpen(false);
+                      await api.auth.logout();
+                      window.location.href = "/";
+                    }}
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <NavLink to="/login">login</NavLink>
           )}
