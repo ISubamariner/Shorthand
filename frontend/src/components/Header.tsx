@@ -1,8 +1,16 @@
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { api, getAccessToken } from "../api/client";
 
 export function Header() {
   const isLoggedIn = getAccessToken() !== null;
+  const [isStaff, setIsStaff] = useState(false);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      api.auth.me().then((u) => setIsStaff(u.is_staff)).catch(() => {});
+    }
+  }, [isLoggedIn]);
 
   return (
     <div className="header">
@@ -53,6 +61,14 @@ export function Header() {
         >
           Leaderboard
         </NavLink>
+        {isStaff && (
+          <NavLink
+            to="/admin"
+            className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
+          >
+            Admin
+          </NavLink>
+        )}
       </div>
     </div>
   );
