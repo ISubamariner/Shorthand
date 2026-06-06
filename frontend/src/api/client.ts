@@ -101,6 +101,10 @@ async function request<T>(
   return response.json();
 }
 
+export function adminRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  return request(`/admin${path}`, options);
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
