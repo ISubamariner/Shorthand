@@ -9,7 +9,7 @@ from jobs.models import Job
 
 from .models import Attempt, Symbol
 from .repositories import AttemptRepository, SymbolRepository
-from .services import submit_attempt, get_user_progress
+from .services import submit_attempt, get_progress
 
 
 class SymbolModelTest(TestCase):
@@ -90,7 +90,7 @@ class AttemptRepositoryTest(TestCase):
     def test_get_by_user(self):
         AttemptRepository.create(user=self.user, symbol=self.symbol_a)
         AttemptRepository.create(user=self.user, symbol=self.symbol_b)
-        attempts = AttemptRepository.get_by_user(self.user)
+        attempts = AttemptRepository.get_by_owner(user=self.user)
         self.assertEqual(len(attempts), 2)
 
     def test_get_user_progress(self):
@@ -103,7 +103,7 @@ class AttemptRepositoryTest(TestCase):
         a2.status = "completed"
         a2.save()
 
-        progress = AttemptRepository.get_user_progress(self.user)
+        progress = AttemptRepository.get_progress(user=self.user)
         entry = next(p for p in progress if p["symbol__letter"] == "A")
         self.assertEqual(entry["total"], 2)
         self.assertEqual(entry["correct"], 1)
@@ -144,10 +144,10 @@ class GetUserProgressServiceTest(TestCase):
             user=self.user, symbol=self.symbol,
             is_correct=True, status="completed",
         )
-        progress = get_user_progress(self.user)
-        self.assertEqual(len(progress), 1)
-        self.assertEqual(progress[0]["symbol__letter"], "A")
-        self.assertEqual(progress[0]["correct"], 1)
+        progress = get_progress(self.user)
+        self.assertEqual(len(progress["symbols"]), 1)
+        self.assertEqual(progress["symbols"][0]["symbol__letter"], "A")
+        self.assertEqual(progress["symbols"][0]["correct"], 1)
 
 
 class SymbolViewTest(TestCase):
@@ -168,10 +168,11 @@ class SymbolViewTest(TestCase):
         self.assertEqual(response.status_code, http_status.HTTP_200_OK)
         self.assertEqual(response.data["letter"], "A")
 
-    def test_unauthenticated_returns_401(self):
+    def test_unauthenticated_allowed(self):
         self.client.force_authenticate(user=None)
         response = self.client.get("/api/symbols/")
-        self.assertEqual(response.status_code, http_status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, http_status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
 
 
 class AttemptViewTest(TestCase):
@@ -216,5 +217,6 @@ class ProgressViewTest(TestCase):
         )
         response = self.client.get("/api/progress/")
         self.assertEqual(response.status_code, http_status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["symbol_letter"], "A")
+        self.assertIn("symbols", response.data)
+        self.assertEqual(len(response.data["symbols"]), 1)
+        self.assertEqual(response.data["symbols"][0]["symbol_letter"], "A")
