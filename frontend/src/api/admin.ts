@@ -10,6 +10,9 @@ import type {
   RetentionStats,
   SystemSetting,
   UsageStats,
+  MonitoringSnapshot,
+  MonitoringHistoryPoint,
+  MonitoringTableStat,
 } from "../types/admin";
 import { adminRequest } from "./client";
 
@@ -114,6 +117,17 @@ export const adminApi = {
     },
     update(settings: Array<{ key: string; value: unknown }>): Promise<SystemSetting[]> {
       return adminRequest("/settings/", { method: "PATCH", body: JSON.stringify(settings) });
+    },
+  },
+  monitoring: {
+    current(): Promise<MonitoringSnapshot> {
+      return adminRequest("/monitoring/current/");
+    },
+    history(range: "24h" | "7d" = "24h"): Promise<MonitoringHistoryPoint[]> {
+      return adminRequest(`/monitoring/history/?range=${range}`);
+    },
+    tableStats(): Promise<MonitoringTableStat[]> {
+      return adminRequest("/monitoring/table-stats/");
     },
   },
 };

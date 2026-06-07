@@ -92,3 +92,32 @@ export interface PaginatedResponse<T> {
   previous: string | null;
   results: T[];
 }
+
+export interface MonitoringSnapshot {
+  cpu_percent: number;
+  memory_percent: number;
+  memory_used_mb: number;
+  memory_total_mb: number;
+  disk_percent: number;
+  disk_used_gb: number;
+  disk_total_gb: number;
+  process_uptime_seconds: number;
+  db_size_mb: number;
+  db_connections: number;
+  table_stats: MonitoringTableStat[];
+}
+
+export interface MonitoringHistoryPoint {
+  timestamp: string;
+  cpu_percent: number;
+  memory_percent: number;
+  disk_percent: number;
+  db_size_mb: number;
+  db_connections: number;
+}
+
+export interface MonitoringTableStat {
+  name: string;
+  row_count: number;
+  size_mb: number;
+}
