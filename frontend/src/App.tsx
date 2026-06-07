@@ -43,6 +43,9 @@ const AuditLogPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import("./pages/admin/SettingsPage").then((m) => ({ default: m.SettingsPage }))
 );
+const MonitoringPage = lazy(() =>
+  import("./pages/admin/MonitoringPage").then((m) => ({ default: m.MonitoringPage }))
+);
 
 export function App() {
   return (
@@ -64,6 +67,7 @@ export function App() {
                     <Route path="jobs" element={<JobsPage />} />
                     <Route path="audit-log" element={<AuditLogPage />} />
                     <Route path="settings" element={<SettingsPage />} />
+                    <Route path="monitoring" element={<MonitoringPage />} />
                   </Route>
                 </Routes>
               </Suspense>

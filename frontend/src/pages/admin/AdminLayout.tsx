@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: "/admin/jobs", label: "Jobs" },
   { to: "/admin/audit-log", label: "Audit Log" },
   { to: "/admin/settings", label: "Settings" },
+  { to: "/admin/monitoring", label: "Monitoring" },
 ];
 
 export function AdminLayout() {
