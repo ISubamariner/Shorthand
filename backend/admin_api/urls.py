@@ -10,6 +10,11 @@ from .views.content import (
 )
 from .views.dashboard import DashboardStatsView
 from .views.jobs import JobCancelView, JobDetailView, JobListView, JobRetryView
+from .views.monitoring import (
+    MonitoringCurrentView,
+    MonitoringHistoryView,
+    MonitoringTableStatsView,
+)
 from .views.settings import SystemSettingsView
 from .views.users import UserDetailView, UserListView
 
@@ -29,4 +34,7 @@ urlpatterns = [
     path("jobs/<uuid:pk>/cancel/", JobCancelView.as_view(), name="admin-job-cancel"),
     path("audit-log/", AuditLogListView.as_view(), name="admin-audit-log"),
     path("settings/", SystemSettingsView.as_view(), name="admin-settings"),
+    path("monitoring/current/", MonitoringCurrentView.as_view(), name="admin-monitoring-current"),
+    path("monitoring/history/", MonitoringHistoryView.as_view(), name="admin-monitoring-history"),
+    path("monitoring/table-stats/", MonitoringTableStatsView.as_view(), name="admin-monitoring-table-stats"),
 ]
