@@ -268,7 +268,7 @@ def main():
     missing = []
 
     if not args.groupings_only:
-            for letter in LETTERS:
+        for letter in LETTERS:
             svg_file = os.path.join(args.svgs, f"{letter.lower()}.svg")
             if not os.path.exists(svg_file):
                 missing.append(letter)

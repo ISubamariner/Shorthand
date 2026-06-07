@@ -11,7 +11,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import classification_report, confusion_matrix
 
-IMG_SIZE = 224
+IMG_SIZE = 64
 
 
 def discover_classes(data_dir: str) -> list[str]:
@@ -36,7 +36,7 @@ def main():
     test_gen = datagen.flow_from_directory(
         args.data,
         target_size=(IMG_SIZE, IMG_SIZE),
-        color_mode="rgb",
+        color_mode="grayscale",
         batch_size=args.batch_size,
         class_mode="categorical",
         shuffle=False,
