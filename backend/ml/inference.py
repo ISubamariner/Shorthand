@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from pathlib import Path
@@ -8,13 +9,28 @@ from .preprocessing import preprocess_image  # now returns (1, 64, 64, 1)
 
 logger = logging.getLogger(__name__)
 
-LETTERS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+ALPHABET = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 MODEL_PATH = Path(__file__).parent / "model.tflite"
+CLASSES_PATH = Path(__file__).parent / "classes.json"
+
+
+def load_class_labels(classes_path=CLASSES_PATH):
+    path = Path(classes_path)
+    if path.exists():
+        try:
+            with open(path, "r") as f:
+                labels = json.load(f)
+            logger.info("Loaded %d class labels from %s", len(labels), path)
+            return labels
+        except (json.JSONDecodeError, IOError) as e:
+            logger.warning("Failed to read %s: %s — using alphabet fallback", path, e)
+    return list(ALPHABET)
 
 
 class TFLitePredictor:
     def __init__(self):
         self._interpreter = None
+        self._labels = load_class_labels()
 
         if MODEL_PATH.exists():
             try:
@@ -32,7 +48,7 @@ class TFLitePredictor:
 
     def predict(self, image_bytes: bytes) -> list[dict]:
         if self._interpreter is None:
-            return [{"label": letter, "confidence": 0.0} for letter in LETTERS[:3]]
+            return [{"label": letter, "confidence": 0.0} for letter in self._labels[:3]]
 
         input_data = preprocess_image(image_bytes)
 
@@ -55,7 +71,7 @@ class TFLitePredictor:
         indexed.sort(key=lambda x: x[1], reverse=True)
 
         return [
-            {"label": LETTERS[idx], "confidence": float(score)}
+            {"label": self._labels[idx], "confidence": float(score)}
             for idx, score in indexed[:3]
         ]
 

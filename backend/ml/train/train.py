@@ -8,6 +8,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import sys
 
@@ -17,12 +18,23 @@ from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
-LETTERS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-NUM_CLASSES = 26
 IMG_SIZE = 64
 
 
-def build_model() -> tf.keras.Model:
+def discover_classes(data_dir: str) -> list[str]:
+    """Auto-discover class labels from subdirectory names in training data dir."""
+    labels = sorted(
+        d for d in os.listdir(data_dir)
+        if os.path.isdir(os.path.join(data_dir, d))
+        and any(f.endswith(".png") for f in os.listdir(os.path.join(data_dir, d)))
+    )
+    if not labels:
+        print(f"ERROR: No class directories with PNG files found in {data_dir}")
+        sys.exit(1)
+    return labels
+
+
+def build_model(num_classes: int) -> tf.keras.Model:
     model = models.Sequential([
         layers.Input(shape=(IMG_SIZE, IMG_SIZE, 1)),
 
@@ -41,7 +53,7 @@ def build_model() -> tf.keras.Model:
         layers.Flatten(),
         layers.Dense(128, activation="relu"),
         layers.Dropout(0.4),
-        layers.Dense(NUM_CLASSES, activation="softmax"),
+        layers.Dense(num_classes, activation="softmax"),
     ])
 
     model.compile(
@@ -53,7 +65,7 @@ def build_model() -> tf.keras.Model:
     return model
 
 
-def create_generators(data_dir: str, batch_size: int, val_split: float = 0.2):
+def create_generators(data_dir: str, batch_size: int, classes: list[str], val_split: float = 0.2):
     train_datagen = ImageDataGenerator(
         rescale=1.0 / 255,
         validation_split=val_split,
@@ -78,7 +90,7 @@ def create_generators(data_dir: str, batch_size: int, val_split: float = 0.2):
         class_mode="categorical",
         subset="training",
         shuffle=True,
-        classes=LETTERS,
+        classes=classes,
     )
 
     val_gen = val_datagen.flow_from_directory(
@@ -89,7 +101,7 @@ def create_generators(data_dir: str, batch_size: int, val_split: float = 0.2):
         class_mode="categorical",
         subset="validation",
         shuffle=False,
-        classes=LETTERS,
+        classes=classes,
     )
 
     return train_gen, val_gen
@@ -104,12 +116,16 @@ def main():
     parser.add_argument("--batch-size", type=int, default=32)
     args = parser.parse_args()
 
-    print("Building CNN model...")
-    model = build_model()
+    print(f"Discovering classes from {args.data}...")
+    classes = discover_classes(args.data)
+    print(f"Found {len(classes)} classes: {', '.join(classes)}")
+
+    print("\nBuilding CNN model...")
+    model = build_model(len(classes))
     model.summary()
 
     print(f"\nLoading data from {args.data}...")
-    train_gen, val_gen = create_generators(args.data, args.batch_size)
+    train_gen, val_gen = create_generators(args.data, args.batch_size, classes)
     print(f"Training samples: {train_gen.samples}")
     print(f"Validation samples: {val_gen.samples}")
 
@@ -140,6 +156,12 @@ def main():
     with open(args.tflite_output, "wb") as f:
         f.write(tflite_model)
     print(f"TFLite model saved to {args.tflite_output}")
+
+    # Save class index
+    classes_path = os.path.join(os.path.dirname(args.output), "classes.json")
+    with open(classes_path, "w") as f:
+        json.dump(classes, f)
+    print(f"Class index saved to {classes_path} ({len(classes)} classes)")
 
 
 if __name__ == "__main__":
