@@ -188,3 +188,67 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* ===== Progress page: stat cards ===== */
+@container (max-width: 480px) {
+  .progress-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===== Leaderboard: hide streak on phone ===== */
+@container (max-width: 480px) {
+  .lb-streak {
+    display: none;
+  }
+
+  .leaderboard-header .lb-streak {
+    display: none;
+  }
+}
+
+/* ===== Auth: reduce top margin on phone ===== */
+@media (max-width: 480px) {
+  .auth-container {
+    margin-top: 24px;
+  }
+
+  .auth-container.auth-centered {
+    min-height: calc(100vh - 60px);
+  }
+}
+
+/* ===== About page: tighter on phone ===== */
+@media (max-width: 480px) {
+  .about-hero .section-title {
+    font-size: 24px;
+  }
+
+  .about-heading {
+    font-size: 17px;
+  }
+
+  .about-page {
+    max-width: 100%;
+  }
+}
+
+/* ===== Credits page: tighter on phone ===== */
+@media (max-width: 480px) {
+  .credits-page {
+    padding: 20px 12px 40px;
+  }
+
+  .credits-hero h1 {
+    font-size: 1.5rem;
+  }
+
+  .credits-card {
+    padding: 16px;
+  }
+
+  .credits-deps {
+    padding: 12px 16px;
+  }
+}
