@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.views import APIView
 
-from .models import UserStats, WordAttemptSession
+from .models import SpecialOutline, UserStats, WordAttemptSession
 from .permissions import AllowAnonymousSession
 from .repositories import AttemptRepository, SymbolRepository
 from .serializers import (
@@ -16,6 +16,7 @@ from .serializers import (
     AttemptSerializer,
     LeaderboardEntrySerializer,
     ProgressResponseSerializer,
+    SpecialOutlineSerializer,
     SymbolSerializer,
 )
 from .services import get_progress, submit_attempt
@@ -44,7 +45,11 @@ class SymbolListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        symbols = SymbolRepository.get_all()
+        symbol_type = request.query_params.get("symbol_type")
+        if symbol_type in ("letter", "grouping"):
+            symbols = SymbolRepository.get_by_type(symbol_type)
+        else:
+            symbols = SymbolRepository.get_all()
         return Response(SymbolSerializer(symbols, many=True).data)
 
 
@@ -173,3 +178,11 @@ class LeaderboardView(APIView):
             )
 
         return Response(LeaderboardEntrySerializer(result, many=True).data)
+
+
+class SpecialOutlineListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        outlines = SpecialOutline.objects.select_related("symbol").all()
+        return Response(SpecialOutlineSerializer(outlines, many=True).data)

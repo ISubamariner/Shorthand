@@ -515,3 +515,40 @@ class AdminSettingsEndpointsTest(EndpointTestBase):
     def test_settings_non_admin(self):
         r = self.auth_client.get("/api/admin/settings/")
         self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
+
+
+# ---------- Grouping Symbols (/api/symbols/, /api/special-outlines/) ----------
+
+
+class GroupingSymbolEndpointsTest(TestCase):
+    def setUp(self):
+        from checker.models import Symbol, SpecialOutline
+        self.letter_sym = Symbol.objects.create(letter="A", name="A", symbol_type="letter")
+        self.grouping_sym = Symbol.objects.create(letter="CM", name="CM blend", symbol_type="grouping")
+        SpecialOutline.objects.create(symbol=self.grouping_sym, meaning="command")
+
+    def test_symbols_list_returns_all_by_default(self):
+        response = self.client.get("/api/symbols/")
+        self.assertEqual(response.status_code, 200)
+        letters = [s["letter"] for s in response.json()]
+        self.assertIn("A", letters)
+        self.assertIn("CM", letters)
+
+    def test_symbols_list_filters_by_type(self):
+        response = self.client.get("/api/symbols/?symbol_type=grouping")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(all(s["symbol_type"] == "grouping" for s in data))
+
+    def test_symbols_include_symbol_type_field(self):
+        response = self.client.get("/api/symbols/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(all("symbol_type" in s for s in data))
+
+    def test_special_outlines_endpoint(self):
+        response = self.client.get("/api/special-outlines/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(any(o["meaning"] == "command" for o in data))
+        self.assertTrue(any(o["symbol_letter"] == "CM" for o in data))

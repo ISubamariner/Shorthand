@@ -1,12 +1,12 @@
 from rest_framework import serializers
 
-from .models import Attempt, Symbol
+from .models import Attempt, Symbol, SpecialOutline
 
 
 class SymbolSerializer(serializers.ModelSerializer):
     class Meta:
         model = Symbol
-        fields = ("id", "letter", "name", "reference_image_url")
+        fields = ("id", "letter", "name", "reference_image_url", "symbol_type")
 
 
 class AttemptSerializer(serializers.ModelSerializer):
@@ -49,7 +49,7 @@ class AttemptSerializer(serializers.ModelSerializer):
 
 
 class AttemptCreateSerializer(serializers.Serializer):
-    symbol_letter = serializers.CharField(max_length=1)
+    symbol_letter = serializers.CharField(max_length=10)
     image_data = serializers.CharField(max_length=700_000, help_text="Base64-encoded PNG image data")
     word_session = serializers.UUIDField(required=False, allow_null=True)
     word_position = serializers.IntegerField(required=False, allow_null=True, min_value=0)
@@ -89,3 +89,11 @@ class LeaderboardEntrySerializer(serializers.Serializer):
     total_score = serializers.IntegerField()
     best_streak = serializers.IntegerField()
     is_current_user = serializers.BooleanField()
+
+
+class SpecialOutlineSerializer(serializers.ModelSerializer):
+    symbol_letter = serializers.CharField(source="symbol.letter", read_only=True)
+
+    class Meta:
+        model = SpecialOutline
+        fields = ("id", "symbol_letter", "meaning")

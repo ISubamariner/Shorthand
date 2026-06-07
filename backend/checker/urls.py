@@ -6,6 +6,7 @@ from .views import (
     AttemptListView,
     LeaderboardView,
     ProgressView,
+    SpecialOutlineListView,
     SymbolDetailView,
     SymbolListView,
 )
@@ -22,6 +23,7 @@ from .word_views import (
 urlpatterns = [
     path("symbols/", SymbolListView.as_view(), name="symbol-list"),
     path("symbols/<str:letter>/", SymbolDetailView.as_view(), name="symbol-detail"),
+    path("special-outlines/", SpecialOutlineListView.as_view(), name="special-outline-list"),
     path("attempts/", AttemptListView.as_view(), name="attempt-list"),
     path("attempts/<uuid:pk>/", AttemptDetailView.as_view(), name="attempt-detail"),
     path("attempts/<uuid:pk>/image/", AttemptImageView.as_view(), name="attempt-image"),

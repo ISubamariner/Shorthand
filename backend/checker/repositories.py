@@ -15,6 +15,10 @@ class SymbolRepository:
     def get_by_letter(letter: str) -> Symbol:
         return Symbol.objects.get(letter=letter.upper())
 
+    @staticmethod
+    def get_by_type(symbol_type: str) -> QuerySet[Symbol]:
+        return Symbol.objects.filter(symbol_type=symbol_type)
+
 
 class AttemptRepository:
     @staticmethod
