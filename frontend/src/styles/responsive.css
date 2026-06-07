@@ -189,6 +189,17 @@
   }
 }
 
+/* ===== Practice page: wrap symbol header on small screens ===== */
+@container (max-width: 480px) {
+  .practice-header {
+    flex-wrap: wrap;
+  }
+
+  .practice-header .section-title {
+    font-size: 18px;
+  }
+}
+
 /* ===== Progress page: stat cards ===== */
 @container (max-width: 480px) {
   .progress-stats {

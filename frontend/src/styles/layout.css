@@ -248,6 +248,14 @@
   color: var(--accent);
 }
 
+/* Practice header (symbol + title + controls) */
+.practice-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
 /* Auth centering */
 .auth-container.auth-centered {
   display: flex;

@@ -23,10 +23,15 @@ export function PracticePage() {
   const [streak, setStreak] = useState(0);
   const [score, setScore] = useState(0);
   const [streakMilestone, setStreakMilestone] = useState(0);
+  const [symbolFilter, setSymbolFilter] = useState<"all" | "letter" | "grouping">("all");
   const scoredAttempts = useRef(new Set<string>());
 
   const fetchAttempt = useCallback((id: string) => api.attempts.get(id), []);
   const poller = useJobPoller<Attempt>(fetchAttempt);
+
+  const filteredSymbols = symbolFilter === "all"
+    ? symbols
+    : symbols.filter((s) => s.symbol_type === symbolFilter);
 
   useEffect(() => {
     api.symbols.list().then((syms) => {
@@ -36,6 +41,7 @@ export function PracticePage() {
         const match = syms.find((s) => s.letter === preselect.toUpperCase());
         if (match) {
           setSelectedSymbol(match);
+          setSymbolFilter(match.symbol_type);
           setRandomMode(false);
           return;
         }
@@ -67,12 +73,12 @@ export function PracticePage() {
   }
 
   function handleNext() {
-    if (!symbols.length || !selectedSymbol) return;
+    if (!filteredSymbols.length || !selectedSymbol) return;
     if (randomMode) {
-      setSelectedSymbol(pickRandom(symbols, selectedSymbol));
+      setSelectedSymbol(pickRandom(filteredSymbols, selectedSymbol));
     } else {
-      const idx = symbols.findIndex((s) => s.letter === selectedSymbol.letter);
-      setSelectedSymbol(symbols[(idx + 1) % symbols.length]!);
+      const idx = filteredSymbols.findIndex((s) => s.letter === selectedSymbol.letter);
+      setSelectedSymbol(filteredSymbols[(idx + 1) % filteredSymbols.length]!);
     }
     poller.stopPolling();
     setCanvasResetKey((k) => k + 1);
@@ -126,8 +132,29 @@ export function PracticePage() {
           {streakMilestone} streak!
         </div>
       )}
+      {/* Symbol type filter */}
+      <div className="progress-tabs" style={{ marginBottom: 16 }}>
+        {(["all", "letter", "grouping"] as const).map((f) => (
+          <button
+            key={f}
+            className={`tab ${symbolFilter === f ? "active" : ""}`}
+            onClick={() => {
+              setSymbolFilter(f);
+              const next = f === "all" ? symbols : symbols.filter((s) => s.symbol_type === f);
+              if (next.length && (!selectedSymbol || (f !== "all" && selectedSymbol.symbol_type !== f))) {
+                setSelectedSymbol(pickRandom(next, selectedSymbol));
+                poller.stopPolling();
+                setCanvasResetKey((k) => k + 1);
+              }
+            }}
+          >
+            {f === "all" ? "All" : f === "letter" ? "Letters" : "Groupings"}
+          </button>
+        ))}
+      </div>
+
       {/* Symbol header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+      <div className="practice-header">
         {selectedSymbol && (
           <div className="sample-box">
             {[20, 40, 70, 90].map((pct) => (
@@ -138,7 +165,7 @@ export function PracticePage() {
               />
             ))}
             <img
-              src={selectedSymbol.reference_image_url || `/symbols/${selectedSymbol.letter.toLowerCase()}.svg`}
+              src={selectedSymbol.reference_image_url || `/symbols/${selectedSymbol.letter.toLowerCase().replace(/\//g, ",")}.svg`}
               alt={`Teeline symbol for ${selectedSymbol.letter}`}
               className="sample-img"
             />
@@ -164,8 +191,8 @@ export function PracticePage() {
             style={{ fontSize: 12, padding: "6px 12px", whiteSpace: "nowrap" }}
             onClick={() => {
               setRandomMode((prev) => !prev);
-              if (!randomMode && symbols.length) {
-                setSelectedSymbol(pickRandom(symbols, selectedSymbol));
+              if (!randomMode && filteredSymbols.length) {
+                setSelectedSymbol(pickRandom(filteredSymbols, selectedSymbol));
                 poller.stopPolling();
                 setCanvasResetKey((k) => k + 1);
               }
@@ -185,7 +212,7 @@ export function PracticePage() {
             }}
           >
             <option value="">Choose...</option>
-            {symbols.map((s) => (
+            {filteredSymbols.map((s) => (
               <option key={s.letter} value={s.letter}>
                 {s.letter} — {s.name}
               </option>
