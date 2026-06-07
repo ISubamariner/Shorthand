@@ -189,6 +189,7 @@ class Word(TimestampedModel):
         on_delete=models.CASCADE,
         related_name="words",
     )
+    teeline_skeleton = models.CharField(max_length=100, blank=True, default="", db_index=True)
     is_curated = models.BooleanField(default=False)
 
     class Meta:

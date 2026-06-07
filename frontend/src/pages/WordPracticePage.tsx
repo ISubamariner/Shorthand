@@ -3,6 +3,7 @@ import { api } from "../api/client";
 import { DrawingCanvas } from "../components/DrawingCanvas";
 import { FeedbackPanel } from "../components/FeedbackPanel";
 import { LetterCard } from "../components/LetterCard";
+import { WordDrawingMode } from "../components/WordDrawingMode";
 import { WordReference } from "../components/WordReference";
 import { useJobPoller } from "../hooks/useJobPoller";
 import type {
@@ -14,8 +15,10 @@ import type {
 } from "../types";
 
 type LetterStatus = "pending" | "correct" | "incorrect";
+type Mode = "practice" | "free-draw";
 
 export function WordPracticePage() {
+  const [mode, setMode] = useState<Mode>("practice");
   const [topics, setTopics] = useState<WordTopic[]>([]);
   const [words, setWords] = useState<WordListItem[]>([]);
   const [symbols, setSymbols] = useState<Symbol[]>([]);
@@ -114,117 +117,145 @@ export function WordPracticePage() {
     setCanvasResetKey((k) => k + 1);
   }
 
+  function handleFreeDrawSelectWord(wordId: string) {
+    setMode("practice");
+    handleSelectWord(wordId);
+  }
+
   return (
     <div className="page">
       <h1>Word Practice</h1>
 
-      <div className="word-filters">
-        <select
-          value={selectedDifficulty}
-          onChange={(e) => setSelectedDifficulty(e.target.value)}
+      <div className="mode-toggle">
+        <button
+          className={`btn btn-sm ${mode === "practice" ? "btn-primary" : "btn-secondary"}`}
+          onClick={() => setMode("practice")}
+          type="button"
         >
-          <option value="">All Difficulties</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
-
-        <select
-          value={selectedTopic}
-          onChange={(e) => setSelectedTopic(e.target.value)}
+          Practice
+        </button>
+        <button
+          className={`btn btn-sm ${mode === "free-draw" ? "btn-primary" : "btn-secondary"}`}
+          onClick={() => setMode("free-draw")}
+          type="button"
         >
-          <option value="">All Topics</option>
-          {topics.map((t) => (
-            <option key={t.slug} value={t.slug}>
-              {t.name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={selectedWord?.id || ""}
-          onChange={(e) => {
-            if (e.target.value) handleSelectWord(e.target.value);
-          }}
-        >
-          <option value="">Select a word...</option>
-          {words.map((w) => (
-            <option key={w.id} value={w.id}>
-              {w.text} ({w.teeline_letters})
-            </option>
-          ))}
-        </select>
+          Free Draw
+        </button>
       </div>
 
-      {selectedWord && (
+      {mode === "free-draw" ? (
+        <WordDrawingMode onSelectWord={handleFreeDrawSelectWord} />
+      ) : (
         <>
-          <div className="word-practice-layout">
-            <div className="word-practice-left">
-              <h3>
-                "{selectedWord.text}" → {selectedWord.teeline_letters}
-              </h3>
-              <WordReference
-                components={selectedWord.components}
-                symbols={symbols}
-              />
-            </div>
+          <div className="word-filters">
+            <select
+              value={selectedDifficulty}
+              onChange={(e) => setSelectedDifficulty(e.target.value)}
+            >
+              <option value="">All Difficulties</option>
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
 
-            <div className="word-practice-right">
-              <div className="letter-cards">
-                {selectedWord.components.map((comp) => (
-                  <LetterCard
-                    key={comp.position}
-                    component={comp}
-                    symbol={symbols.find((s) => s.letter === comp.letter)}
-                    status={letterStatuses[comp.position] || "pending"}
-                    isActive={activePosition === comp.position}
-                    onClick={() => {
-                      setActivePosition(comp.position);
-                      stopPolling();
-                      setCanvasResetKey((k) => k + 1);
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
+            <select
+              value={selectedTopic}
+              onChange={(e) => setSelectedTopic(e.target.value)}
+            >
+              <option value="">All Topics</option>
+              {topics.map((t) => (
+                <option key={t.slug} value={t.slug}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedWord?.id || ""}
+              onChange={(e) => {
+                if (e.target.value) handleSelectWord(e.target.value);
+              }}
+            >
+              <option value="">Select a word...</option>
+              {words.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.text} ({w.teeline_letters})
+                </option>
+              ))}
+            </select>
           </div>
 
-          {activePosition !== null && !attempt && selectedWord.components[activePosition] && (
-            <div className="canvas-section">
-              <p>
-                Draw letter: <strong>{selectedWord.components[activePosition]!.letter}</strong>
-              </p>
-              <DrawingCanvas
-                resetKey={canvasResetKey}
-                onExport={handleExport}
-              />
-              {submitError && <p className="error">{submitError}</p>}
-            </div>
-          )}
+          {selectedWord && (
+            <>
+              <div className="word-practice-layout">
+                <div className="word-practice-left">
+                  <h3>
+                    "{selectedWord.text}" → {selectedWord.teeline_letters}
+                  </h3>
+                  <WordReference
+                    components={selectedWord.components}
+                    symbols={symbols}
+                  />
+                </div>
 
-          {attempt && activePosition !== null && selectedWord.components[activePosition] && (
-            <FeedbackPanel
-              attempt={attempt}
-              expectedLetter={selectedWord.components[activePosition]!.letter}
-              onRetry={handleRetry}
-              onNext={handleNextLetter}
-            />
-          )}
+                <div className="word-practice-right">
+                  <div className="letter-cards">
+                    {selectedWord.components.map((comp) => (
+                      <LetterCard
+                        key={comp.position}
+                        component={comp}
+                        symbol={symbols.find((s) => s.letter === comp.letter)}
+                        status={letterStatuses[comp.position] || "pending"}
+                        isActive={activePosition === comp.position}
+                        onClick={() => {
+                          setActivePosition(comp.position);
+                          stopPolling();
+                          setCanvasResetKey((k) => k + 1);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-          {allDone && session?.status !== "completed" && (
-            <button className="btn btn-primary" onClick={handleComplete}>
-              Complete Word
-            </button>
-          )}
+              {activePosition !== null && !attempt && selectedWord.components[activePosition] && (
+                <div className="canvas-section">
+                  <p>
+                    Draw letter: <strong>{selectedWord.components[activePosition]!.letter}</strong>
+                  </p>
+                  <DrawingCanvas
+                    resetKey={canvasResetKey}
+                    onExport={handleExport}
+                  />
+                  {submitError && <p className="error">{submitError}</p>}
+                </div>
+              )}
 
-          {session?.status === "completed" && (
-            <div className="word-summary">
-              <h3>Word Complete!</h3>
-              <p>
-                {session.letters_correct} / {session.letters_total} correct
-              </p>
-              <p>Points earned: {session.points_awarded}</p>
-            </div>
+              {attempt && activePosition !== null && selectedWord.components[activePosition] && (
+                <FeedbackPanel
+                  attempt={attempt}
+                  expectedLetter={selectedWord.components[activePosition]!.letter}
+                  onRetry={handleRetry}
+                  onNext={handleNextLetter}
+                />
+              )}
+
+              {allDone && session?.status !== "completed" && (
+                <button className="btn btn-primary" onClick={handleComplete}>
+                  Complete Word
+                </button>
+              )}
+
+              {session?.status === "completed" && (
+                <div className="word-summary">
+                  <h3>Word Complete!</h3>
+                  <p>
+                    {session.letters_correct} / {session.letters_total} correct
+                  </p>
+                  <p>Points earned: {session.points_awarded}</p>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

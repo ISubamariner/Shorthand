@@ -17,6 +17,7 @@ from .word_views import (
     WordSessionCompleteView,
     WordSessionDetailView,
     WordSessionListView,
+    WordSuggestView,
     WordTopicListView,
 )
 
@@ -36,4 +37,5 @@ urlpatterns = [
     path("word-sessions/<uuid:pk>/", WordSessionDetailView.as_view(), name="word-session-detail"),
     path("word-sessions/<uuid:pk>/complete/", WordSessionCompleteView.as_view(), name="word-session-complete"),
     path("word-progress/", WordProgressView.as_view(), name="word-progress"),
+    path("word-suggest/", WordSuggestView.as_view(), name="word-suggest"),
 ]

@@ -7,12 +7,17 @@ from rest_framework.views import APIView
 from .models import WordAttemptSession
 from .permissions import AllowAnonymousSession
 from .word_repository import WordRepository, WordTopicRepository
+from .word_recognition_service import (
+    suggest_words_by_prefix,
+    suggest_words_by_skeleton,
+)
 from .word_serializers import (
     WordListSerializer,
     WordProgressSerializer,
     WordSerializer,
     WordSessionCreateSerializer,
     WordSessionSerializer,
+    WordSuggestionSerializer,
     WordTopicSerializer,
 )
 from .word_service import (
@@ -45,6 +50,8 @@ class WordListView(APIView):
         topic = request.query_params.get("topic")
         words = WordRepository.get_all(difficulty=difficulty, topic_slug=topic)
         paginator = PageNumberPagination()
+        paginator.page_size_query_param = "page_size"
+        paginator.max_page_size = 1000
         page = paginator.paginate_queryset(words, request)
         return paginator.get_paginated_response(WordListSerializer(page, many=True).data)
 
@@ -110,3 +117,23 @@ class WordProgressView(APIView):
             topic_slug=topic,
         )
         return Response(WordProgressSerializer(progress, many=True).data)
+
+
+class WordSuggestView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        skeleton = request.query_params.get("skeleton")
+        prefix = request.query_params.get("prefix")
+
+        if skeleton and skeleton.strip():
+            suggestions = suggest_words_by_skeleton(skeleton.strip().upper())
+        elif prefix and prefix.strip():
+            suggestions = suggest_words_by_prefix(prefix.strip().upper())
+        else:
+            return Response(
+                {"error": "Provide 'skeleton' or 'prefix' query parameter"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(WordSuggestionSerializer(suggestions, many=True).data)

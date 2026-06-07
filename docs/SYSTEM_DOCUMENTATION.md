@@ -2,7 +2,7 @@
 
 > Teeline Shorthand ML Checker: A web application for practicing Teeline shorthand symbols (26 letters + 51 multi-letter groupings) with ML-powered handwriting recognition.
 
-**Generated**: 2026-06-07 | **Phase**: 1–2 complete, Phases 3–4 pending
+**Generated**: 2026-06-08 | **Phase**: 1–2 complete, Word Practice Phase B (inverse pipeline) complete, Phases 3–4 pending
 
 ---
 
@@ -229,6 +229,7 @@ Shorthand/
 |-------|------|------------|
 | text | CharField(100) | unique |
 | teeline_letters | CharField(50) | |
+| teeline_skeleton | CharField(100) | blank, default="", db_index. Grouping-aware decomposition (e.g. "T-H-R" for "there") |
 | difficulty | CharField | choices: beginner, intermediate, advanced |
 | topic | FK → WordTopic | on_delete CASCADE |
 | is_curated | BooleanField | default=False |
@@ -321,6 +322,7 @@ Shorthand/
 | GET | `/word-sessions/:pk/` | WordSessionDetailView | AllowAnonymousSession | Session detail + letter results |
 | POST | `/word-sessions/:pk/complete/` | WordSessionCompleteView | AllowAnonymousSession | Complete session, award points |
 | GET | `/word-progress/` | WordProgressView | AllowAnonymousSession | Word progress (filter: difficulty, topic) |
+| GET | `/word-suggest/` | WordSuggestView | AllowAny | Word suggestions by skeleton or prefix (query: `skeleton` or `prefix`) |
 
 #### Admin API — `/api/admin/`
 
@@ -361,6 +363,18 @@ All admin endpoints require `IsAuthenticated` + `is_staff`.
 - `complete_session(session_id, user/session)` — Calculates letters_correct, awards 10 pts (+5 if perfect), updates UserStats
 - `get_session_detail(session_id, user/session)` — Session with per-letter results
 - `get_word_progress(user/session, difficulty, topic_slug)` — Aggregated word-level progress
+
+**`checker/word_recognition_service.py`**
+- `recognize_grouping(image_bytes)` — Runs ML prediction on a drawn grouping image
+- `suggest_words(grouping_sequence)` — Maps recognized groupings to candidate words via reverse index
+- `suggest_words_by_skeleton(skeleton)` — Exact match lookup by full skeleton string
+- `suggest_words_by_prefix(prefix)` — Prefix match lookup for real-time suggestions
+
+**`checker/teeline_index.py`** — Thread-safe in-memory reverse index (skeleton → Word objects)
+- `lookup(skeleton)` — Exact match
+- `prefix_lookup(prefix)` — All words whose skeleton starts with prefix
+- `suggest_from_groupings(groupings)` — Exact match first, then prefix fallback
+- `invalidate()` — Clears cache after seeding
 
 **`admin_api/services.py`**
 - `log_audit(actor, action, target_type, target_id, details)` → AuditLog (sanitizes UUID objects in details via custom JSON encoder)
@@ -440,7 +454,7 @@ Requires `is_authenticated` AND `is_staff`.
 | `make_admin` | admin_api | Promotes existing user to staff |
 | `seed_symbols` | checker | Populates 26 letter symbols (A–Z) |
 | `seed_groupings` | checker | Populates 51 multi-letter grouping symbols |
-| `seed_words` | checker | Populates ~95 words across 4 topics |
+| `seed_words` | checker | Populates ~1,000 words across 8 topics with grouping-aware `teeline_skeleton` |
 | `cleanup_stale_sessions` | checker | Removes old anonymous sessions |
 
 ### Settings & Configuration
@@ -494,7 +508,7 @@ Defined in `App.tsx` via React Router DOM 6:
 - Anonymous session: UUID in `shorthand_session_token` localStorage key
 - All requests include `X-Session-Token` header; authenticated requests add `Authorization: Bearer`
 - Auto-refresh on 401: refreshes token, retries original request; on failure clears tokens
-- Exported `api` object with namespaced methods: `auth`, `symbols`, `attempts`, `progress`, `leaderboard`, `words`, `wordSessions`, `wordProgress`
+- Exported `api` object with namespaced methods: `auth`, `symbols`, `attempts`, `progress`, `leaderboard`, `words`, `wordSessions`, `wordProgress`, `wordSuggest`
 - `ApiError` class captures HTTP status + response body
 
 **`api/admin.ts`**:
@@ -520,6 +534,10 @@ Defined in `App.tsx` via React Router DOM 6:
 | WordReference | `components/WordReference.tsx` | Horizontal strip of teeline images with blend connectors |
 | AdminRoute | `components/admin/AdminRoute.tsx` | Guard wrapper — checks auth + is_staff, redirects if unauthorized |
 | StatCard | `components/admin/StatCard.tsx` | Simple label + value display card |
+| WordDrawingMode | `components/WordDrawingMode.tsx` | Free Draw mode: draw groupings one at a time, accumulate recognized groupings as badges, show word suggestions |
+| WordSuggestions | `components/WordSuggestions.tsx` | Queries word-suggest API with accumulated grouping prefix, shows clickable candidate words |
+| AdminRoute | `components/admin/AdminRoute.tsx` | Guard wrapper — checks auth + is_staff, redirects if unauthorized |
+| StatCard | `components/admin/StatCard.tsx` | Simple label + value display card |
 | ActionConfirm | `components/admin/ActionConfirm.tsx` | Modal overlay for destructive action confirmation |
 
 ### Pages
@@ -527,7 +545,7 @@ Defined in `App.tsx` via React Router DOM 6:
 | Page | Key behavior |
 |------|-------------|
 | **PracticePage** | Loads symbols, random/sequential mode, DrawingCanvas → submit attempt → poll with useJobPoller → FeedbackPanel. Streak/score badges, milestone toast every 5 |
-| **WordPracticePage** | Filter by difficulty/topic, select word → create WordSession → LetterCards per component → draw each letter → complete session |
+| **WordPracticePage** | Two modes: **Practice** (filter by difficulty/topic, select word → LetterCards → draw each letter → complete session) and **Free Draw** (draw groupings → ML recognition → accumulated skeleton → word suggestions → click to practice) |
 | **ProgressPage** | Tabs: Symbols (per-symbol accuracy bars, 5 weakest highlighted) / Words (per-word progress bars, mastered count) |
 | **LeaderboardPage** | Top 50 table, highlights current user row |
 | **LoginPage** | Toggle register/login mode, field error parsing from ApiError |
@@ -541,7 +559,7 @@ Polls an async fetcher at configurable interval (default 1s) until status reache
 
 ### Type Definitions
 
-**`types/index.ts`**: `Symbol`, `Attempt`, `Progress`, `ProgressResponse`, `LeaderboardEntry`, `TokenPair`, `User`, `Word`, `WordTopic`, `TeelineComponent`, `WordSession`, `WordProgress`
+**`types/index.ts`**: `Symbol`, `Attempt`, `Progress`, `ProgressResponse`, `LeaderboardEntry`, `TokenPair`, `User`, `Word`, `WordListItem`, `WordTopic`, `TeelineComponent`, `WordSession`, `WordProgress`, `WordSuggestion`
 
 **`types/admin.ts`**: `AdminUser`, `DashboardStats`, `AdminSymbol`, `AdminWord`, `AdminJob`, `AdminJobDetail`, `AuditLogEntry`, `SystemSetting`, `UsageStats`, `RetentionStats`, `PaginatedResponse<T>`
 

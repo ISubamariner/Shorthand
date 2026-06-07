@@ -1,6 +1,6 @@
 import type {
   Attempt, LeaderboardEntry, ProgressResponse, Symbol, TokenPair, User,
-  Word, WordListItem, WordProgress, WordSession, WordTopic,
+  Word, WordListItem, WordProgress, WordSession, WordSuggestion, WordTopic,
 } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "/api";
@@ -187,10 +187,10 @@ export const api = {
   words: {
     list(params?: { difficulty?: string; topic?: string }): Promise<{ results: WordListItem[]; count: number }> {
       const search = new URLSearchParams();
+      search.set("page_size", "1000");
       if (params?.difficulty) search.set("difficulty", params.difficulty);
       if (params?.topic) search.set("topic", params.topic);
-      const qs = search.toString();
-      return request(`/words/${qs ? `?${qs}` : ""}`);
+      return request(`/words/?${search.toString()}`);
     },
     get(id: string): Promise<Word> {
       return request(`/words/${id}/`);
@@ -220,6 +220,14 @@ export const api = {
       if (params?.topic) search.set("topic", params.topic);
       const qs = search.toString();
       return request(`/word-progress/${qs ? `?${qs}` : ""}`);
+    },
+  },
+  wordSuggest: {
+    bySkeleton(skeleton: string): Promise<WordSuggestion[]> {
+      return request(`/word-suggest/?skeleton=${encodeURIComponent(skeleton)}`);
+    },
+    byPrefix(prefix: string): Promise<WordSuggestion[]> {
+      return request(`/word-suggest/?prefix=${encodeURIComponent(prefix)}`);
     },
   },
 };

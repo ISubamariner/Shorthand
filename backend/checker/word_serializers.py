@@ -22,7 +22,7 @@ class WordSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Word
-        fields = ("id", "text", "teeline_letters", "difficulty", "topic", "components")
+        fields = ("id", "text", "teeline_letters", "teeline_skeleton", "difficulty", "topic", "components")
 
     def get_components(self, obj):
         from .teeline import decompose
@@ -47,7 +47,7 @@ class WordListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Word
-        fields = ("id", "text", "teeline_letters", "difficulty", "topic")
+        fields = ("id", "text", "teeline_letters", "teeline_skeleton", "difficulty", "topic")
 
 
 class WordSessionCreateSerializer(serializers.Serializer):
@@ -81,3 +81,11 @@ class WordProgressSerializer(serializers.Serializer):
     completed_sessions = serializers.IntegerField()
     perfect_sessions = serializers.IntegerField()
     accuracy = serializers.FloatField()
+
+
+class WordSuggestionSerializer(serializers.Serializer):
+    word_id = serializers.CharField()
+    text = serializers.CharField()
+    teeline_skeleton = serializers.CharField()
+    difficulty = serializers.CharField()
+    topic_name = serializers.CharField(allow_null=True)

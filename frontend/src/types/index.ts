@@ -70,6 +70,7 @@ export interface Word {
   id: string;
   text: string;
   teeline_letters: string;
+  teeline_skeleton: string;
   difficulty: "beginner" | "intermediate" | "advanced";
   topic: WordTopic;
   components: TeelineComponent[];
@@ -79,6 +80,7 @@ export interface WordListItem {
   id: string;
   text: string;
   teeline_letters: string;
+  teeline_skeleton: string;
   difficulty: "beginner" | "intermediate" | "advanced";
   topic: WordTopic;
 }
@@ -100,4 +102,12 @@ export interface WordProgress {
   completed_sessions: number;
   perfect_sessions: number;
   accuracy: number;
+}
+
+export interface WordSuggestion {
+  word_id: string;
+  text: string;
+  teeline_skeleton: string;
+  difficulty: string;
+  topic_name: string | null;
 }
