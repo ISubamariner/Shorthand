@@ -55,33 +55,34 @@ def augment_image(img: Image.Image) -> Image.Image:
 
 
 def augment_dataset(input_dir: str, output_dir: str, factor: int = 10):
-    letters = sorted(
+    labels = sorted(
         d for d in os.listdir(input_dir)
-        if os.path.isdir(os.path.join(input_dir, d)) and len(d) == 1
+        if os.path.isdir(os.path.join(input_dir, d))
+        and any(f.endswith(".png") for f in os.listdir(os.path.join(input_dir, d)))
     )
 
     total = 0
-    for letter in letters:
-        letter_in = os.path.join(input_dir, letter)
-        letter_out = os.path.join(output_dir, letter)
-        os.makedirs(letter_out, exist_ok=True)
+    for label in labels:
+        label_in = os.path.join(input_dir, label)
+        label_out = os.path.join(output_dir, label)
+        os.makedirs(label_out, exist_ok=True)
 
-        files = [f for f in os.listdir(letter_in) if f.endswith(".png")]
+        files = [f for f in os.listdir(label_in) if f.endswith(".png")]
 
         for fname in files:
-            img = Image.open(os.path.join(letter_in, fname)).convert("L")
+            img = Image.open(os.path.join(label_in, fname)).convert("L")
             processed = binarize_and_center(img)
             base_name = os.path.splitext(fname)[0]
 
-            processed.save(os.path.join(letter_out, f"{base_name}_orig.png"))
+            processed.save(os.path.join(label_out, f"{base_name}_orig.png"))
             total += 1
 
             for j in range(factor - 1):
                 aug = augment_image(processed)
-                aug.save(os.path.join(letter_out, f"{base_name}_aug{j:02d}.png"))
+                aug.save(os.path.join(label_out, f"{base_name}_aug{j:02d}.png"))
                 total += 1
 
-        print(f"  {letter}: {len(files)} originals -> {len(files) * factor} total")
+        print(f"  {label}: {len(files)} originals -> {len(files) * factor} total")
 
     print(f"\nAugmented {total} images in {output_dir}")
 

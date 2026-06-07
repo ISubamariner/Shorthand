@@ -6,6 +6,8 @@ scale, position shift, stroke width, noise) to create training data.
 
 Usage:
     python generate_synthetic.py --svgs ../../../data/reference/teeline-online/outline-svgs/alphabet --output ../../../data/raw --samples 100
+    python generate_synthetic.py --groupings-svgs ../../../data/reference/teeline-online/outline-svgs/letter-groupings --output ../../../data/raw --samples 100
+    python generate_synthetic.py --groupings-only --output ../../../data/raw --samples 50
 """
 
 import argparse
@@ -250,9 +252,14 @@ def create_symbol_image(
 def main():
     parser = argparse.ArgumentParser(description="Generate synthetic Teeline training data from SVGs")
     parser.add_argument("--svgs", default="../../../data/reference/teeline-online/outline-svgs/alphabet")
+    parser.add_argument("--groupings-svgs",
+                        default="../../../data/reference/teeline-online/outline-svgs/letter-groupings",
+                        help="Directory of grouping SVG files")
     parser.add_argument("--output", default="../../../data/raw")
     parser.add_argument("--samples", type=int, default=100)
     parser.add_argument("--size", type=int, default=224)
+    parser.add_argument("--groupings-only", action="store_true",
+                        help="Only generate grouping images (skip single letters)")
     args = parser.parse_args()
 
     os.makedirs(args.output, exist_ok=True)
@@ -260,32 +267,57 @@ def main():
     total = 0
     missing = []
 
-    for letter in LETTERS:
-        svg_file = os.path.join(args.svgs, f"{letter.lower()}.svg")
-        if not os.path.exists(svg_file):
-            missing.append(letter)
-            continue
+    if not args.groupings_only:
+            for letter in LETTERS:
+            svg_file = os.path.join(args.svgs, f"{letter.lower()}.svg")
+            if not os.path.exists(svg_file):
+                missing.append(letter)
+                continue
 
-        strokes = parse_svg_path(svg_file)
-        if not strokes:
-            print(f"  {letter}: WARNING - no strokes found in SVG")
-            missing.append(letter)
-            continue
+            strokes = parse_svg_path(svg_file)
+            if not strokes:
+                print(f"  {letter}: WARNING - no strokes found in SVG")
+                missing.append(letter)
+                continue
 
-        letter_dir = os.path.join(args.output, letter)
-        os.makedirs(letter_dir, exist_ok=True)
+            letter_dir = os.path.join(args.output, letter)
+            os.makedirs(letter_dir, exist_ok=True)
 
-        for i in range(args.samples):
-            img = create_symbol_image(strokes, size=args.size)
-            img.save(os.path.join(letter_dir, f"{letter}_{i:04d}.png"))
-            total += 1
+            for i in range(args.samples):
+                img = create_symbol_image(strokes, size=args.size)
+                img.save(os.path.join(letter_dir, f"{letter}_{i:04d}.png"))
+                total += 1
 
-        print(f"  {letter}: {args.samples} samples from SVG")
+            print(f"  {letter}: {args.samples} samples from SVG")
 
-    if missing:
-        print(f"\n  Missing SVGs for: {', '.join(missing)}")
+        if missing:
+            print(f"\n  Missing SVGs for: {', '.join(missing)}")
 
-    print(f"\nGenerated {total} images in {args.output}")
+    # Generate grouping symbols
+    groupings_dir = args.groupings_svgs
+    if os.path.isdir(groupings_dir):
+        svg_files = sorted(f for f in os.listdir(groupings_dir) if f.endswith(".svg"))
+        for svg_file in svg_files:
+            stem = os.path.splitext(svg_file)[0]
+            label = stem.upper().replace(",", "_")  # "tr,thr" → "TR_THR"
+            svg_path = os.path.join(groupings_dir, svg_file)
+
+            strokes = parse_svg_path(svg_path)
+            if not strokes:
+                print(f"  {label}: WARNING - no strokes found in SVG")
+                continue
+
+            out_dir = os.path.join(args.output, label)
+            os.makedirs(out_dir, exist_ok=True)
+            for i in range(args.samples):
+                img = create_symbol_image(strokes, size=args.size)
+                img.save(os.path.join(out_dir, f"{label}_{i:04d}.png"))
+                total += 1
+            print(f"  {label}: {args.samples} samples from SVG")
+    else:
+        print(f"  Groupings SVG directory not found: {groupings_dir}")
+
+    print(f"\nGenerated {total} total images in {args.output}")
 
 
 if __name__ == "__main__":
