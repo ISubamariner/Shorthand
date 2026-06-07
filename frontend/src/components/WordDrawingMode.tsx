@@ -34,14 +34,17 @@ export function WordDrawingMode({ onSelectWord }: WordDrawingModeProps) {
   }
 
   useEffect(() => {
-    if (attempt?.status === "completed" && attempt.predicted_label) {
+    if (attempt?.status === "completed" && attempt.predicted_label?.trim()) {
       setRecognizedGroupings((prev) => [...prev, attempt.predicted_label!]);
       setSubmitting(false);
       stopPolling();
       setCanvasResetKey((k) => k + 1);
-    } else if (attempt?.status === "failed") {
+    } else if (attempt?.status === "completed" || attempt?.status === "failed") {
       setSubmitting(false);
       stopPolling();
+      if (attempt?.status === "completed") {
+        setError("Could not recognize the grouping. Try again.");
+      }
     }
   }, [attempt?.status, attempt?.predicted_label, stopPolling]);
 
