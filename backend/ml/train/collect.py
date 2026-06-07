@@ -31,7 +31,8 @@ def main(output_dir="../../data/raw"):
 
     for attempt in attempts:
         letter = attempt.symbol.letter
-        letter_dir = os.path.join(output_dir, letter)
+        dir_name = letter.replace("/", "_")
+        letter_dir = os.path.join(output_dir, dir_name)
         os.makedirs(letter_dir, exist_ok=True)
 
         filename = f"{attempt.id}.png"

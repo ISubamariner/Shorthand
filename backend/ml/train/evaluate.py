@@ -11,8 +11,15 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import classification_report, confusion_matrix
 
-LETTERS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 IMG_SIZE = 224
+
+
+def discover_classes(data_dir: str) -> list[str]:
+    return sorted(
+        d for d in os.listdir(data_dir)
+        if os.path.isdir(os.path.join(data_dir, d))
+        and any(f.endswith(".png") for f in os.listdir(os.path.join(data_dir, d)))
+    )
 
 
 def main():
@@ -22,6 +29,7 @@ def main():
     parser.add_argument("--batch-size", type=int, default=32)
     args = parser.parse_args()
 
+    classes = discover_classes(args.data)
     model = tf.keras.models.load_model(args.model)
 
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1.0 / 255)
@@ -32,7 +40,7 @@ def main():
         batch_size=args.batch_size,
         class_mode="categorical",
         shuffle=False,
-        classes=LETTERS,
+        classes=classes,
     )
 
     predictions = model.predict(test_gen)
@@ -40,7 +48,7 @@ def main():
     y_true = test_gen.classes
 
     print("\n=== Classification Report ===\n")
-    print(classification_report(y_true, y_pred, target_names=LETTERS))
+    print(classification_report(y_true, y_pred, target_names=classes))
 
     print("\n=== Confusion Matrix ===\n")
     cm = confusion_matrix(y_true, y_pred)
@@ -54,11 +62,11 @@ def main():
         ax.set_title("Confusion Matrix")
         ax.set_xlabel("Predicted")
         ax.set_ylabel("True")
-        tick_marks = np.arange(len(LETTERS))
+        tick_marks = np.arange(len(classes))
         ax.set_xticks(tick_marks)
-        ax.set_xticklabels(LETTERS, fontsize=8)
+        ax.set_xticklabels(classes, fontsize=8)
         ax.set_yticks(tick_marks)
-        ax.set_yticklabels(LETTERS, fontsize=8)
+        ax.set_yticklabels(classes, fontsize=8)
         fig.colorbar(im)
         plt.tight_layout()
         plt.savefig("confusion_matrix.png", dpi=150)
@@ -67,7 +75,7 @@ def main():
         print("\nmatplotlib not available — skipping plot")
 
     weak = []
-    for i, letter in enumerate(LETTERS):
+    for i, letter in enumerate(classes):
         total = np.sum(cm[i])
         correct = cm[i][i] if total > 0 else 0
         acc = correct / total if total > 0 else 0
