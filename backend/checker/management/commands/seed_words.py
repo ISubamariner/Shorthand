@@ -202,8 +202,13 @@ def _difficulty(teeline_letters: str) -> str:
 
 
 def _compute_skeleton(word_text: str) -> str:
-    components = decompose(word_text, known_groupings=KNOWN_GROUPINGS)
-    return "-".join(c["letter"] for c in components)
+    try:
+        components = decompose(word_text, known_groupings=KNOWN_GROUPINGS)
+        return "-".join(c["letter"] for c in components)
+    except (ValueError, KeyError, IndexError) as e:
+        import logging
+        logging.warning(f"Failed to decompose word '{word_text}': {e}")
+        return ""
 
 
 class Command(BaseCommand):

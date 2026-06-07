@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 from .models import WordAttemptSession
@@ -121,15 +122,16 @@ class WordProgressView(APIView):
 
 class WordSuggestView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AnonRateThrottle]
 
     def get(self, request):
-        skeleton = request.query_params.get("skeleton")
-        prefix = request.query_params.get("prefix")
+        skeleton = request.query_params.get("skeleton", "").strip()[:100]
+        prefix = request.query_params.get("prefix", "").strip()[:100]
 
-        if skeleton and skeleton.strip():
-            suggestions = suggest_words_by_skeleton(skeleton.strip().upper())
-        elif prefix and prefix.strip():
-            suggestions = suggest_words_by_prefix(prefix.strip().upper())
+        if skeleton:
+            suggestions = suggest_words_by_skeleton(skeleton.upper())
+        elif prefix:
+            suggestions = suggest_words_by_prefix(prefix.upper())
         else:
             return Response(
                 {"error": "Provide 'skeleton' or 'prefix' query parameter"},

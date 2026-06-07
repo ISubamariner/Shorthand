@@ -12,11 +12,13 @@ export function WordDrawingMode({ onSelectWord }: WordDrawingModeProps) {
   const [recognizedGroupings, setRecognizedGroupings] = useState<string[]>([]);
   const [canvasResetKey, setCanvasResetKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const { data: attempt, startPolling, stopPolling } = useJobPoller(api.attempts.get);
 
   async function handleExport(base64: string) {
     setSubmitting(true);
+    setError("");
     try {
       // Submit with a placeholder letter — the ML model determines the actual grouping
       const created = await api.attempts.create({
@@ -26,6 +28,7 @@ export function WordDrawingMode({ onSelectWord }: WordDrawingModeProps) {
       startPolling(created.id);
     } catch {
       setSubmitting(false);
+      setError("Failed to submit drawing. Please try again.");
     }
   }
 
@@ -91,6 +94,7 @@ export function WordDrawingMode({ onSelectWord }: WordDrawingModeProps) {
           onExport={handleExport}
         />
         {submitting && <p className="status-text">Recognizing...</p>}
+        {error && <p className="error">{error}</p>}
       </div>
 
       <WordSuggestions

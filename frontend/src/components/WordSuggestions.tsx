@@ -9,15 +9,22 @@ interface WordSuggestionsProps {
 
 export function WordSuggestions({ groupings, onSelectWord }: WordSuggestionsProps) {
   const [suggestions, setSuggestions] = useState<WordSuggestion[]>([]);
+  const [error, setError] = useState(false);
 
   const prefixKey = groupings.join("-");
 
   useEffect(() => {
     if (groupings.length === 0) {
       setSuggestions([]);
+      setError(false);
       return;
     }
-    api.wordSuggest.byPrefix(prefixKey).then(setSuggestions).catch(() => setSuggestions([]));
+    setError(false);
+    api.wordSuggest.byPrefix(prefixKey).then(setSuggestions).catch(() => {
+      console.error("Failed to fetch word suggestions");
+      setSuggestions([]);
+      setError(true);
+    });
   }, [prefixKey]);
 
   if (groupings.length === 0) return null;
@@ -25,7 +32,9 @@ export function WordSuggestions({ groupings, onSelectWord }: WordSuggestionsProp
   return (
     <div className="word-suggestions">
       <h4>Matching Words</h4>
-      {suggestions.length === 0 ? (
+      {error ? (
+        <p className="error">Failed to load suggestions</p>
+      ) : suggestions.length === 0 ? (
         <p className="empty-state">No matching words found</p>
       ) : (
         <div className="suggestion-list">

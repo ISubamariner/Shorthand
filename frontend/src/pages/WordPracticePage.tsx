@@ -39,6 +39,15 @@ export function WordPracticePage() {
   }, []);
 
   useEffect(() => {
+    setSelectedWord(null);
+    setSession(null);
+    setActivePosition(null);
+    setLetterStatuses({});
+    stopPolling();
+    setCanvasResetKey((k) => k + 1);
+  }, [mode, stopPolling]);
+
+  useEffect(() => {
     api.words
       .list({
         difficulty: selectedDifficulty || undefined,

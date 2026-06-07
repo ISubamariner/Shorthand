@@ -44,13 +44,15 @@ def _ensure_built():
 def lookup(skeleton: str) -> list:
     """Exact match: return words whose full skeleton matches."""
     _ensure_built()
-    return list(_index.get(skeleton, []))
+    idx = _index
+    return list(idx.get(skeleton, [])) if idx else []
 
 
 def prefix_lookup(prefix: str) -> list:
     """Prefix match: return words whose skeleton starts with the given prefix."""
     _ensure_built()
-    return list(_prefix_index.get(prefix, []))
+    idx = _prefix_index
+    return list(idx.get(prefix, [])) if idx else []
 
 
 def suggest_from_groupings(groupings: list[str]) -> list:
