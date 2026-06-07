@@ -1,8 +1,8 @@
 # Shorthand — System Documentation
 
-> Teeline Shorthand ML Checker: A web application for practicing and learning Teeline shorthand letter forms using machine learning-powered handwriting recognition.
+> Teeline Shorthand ML Checker: A web application for practicing Teeline shorthand symbols (26 letters + 51 multi-letter groupings) with ML-powered handwriting recognition.
 
-**Generated**: 2026-06-06 | **Phase**: 1 complete (code), Phases 2–4 pending
+**Generated**: 2026-06-07 | **Phase**: 1–2 complete, Phases 3–4 pending
 
 ---
 
@@ -125,7 +125,7 @@ Shorthand/
 │   │   ├── preprocessing.py
 │   │   └── train/         # Training pipeline scripts
 │   ├── tests/             # System-level tests
-│   │   └── test_endpoints.py  # Endpoint smoke tests (71 tests)
+│   │   └── test_endpoints.py  # Endpoint smoke tests (75 tests)
 │   ├── Dockerfile         # Multi-stage (dev/prod)
 │   ├── manage.py
 │   └── requirements.txt
@@ -182,9 +182,10 @@ Shorthand/
 #### checker.Symbol
 | Field | Type | Constraints |
 |-------|------|------------|
-| letter | CharField(1) | unique |
+| letter | CharField(10) | unique |
 | name | CharField(50) | |
 | reference_image_url | URLField | blank=True |
+| symbol_type | CharField(10) | choices: letter, grouping; default=letter |
 
 #### checker.Attempt (extends TimestampedModel)
 | Field | Type | Constraints |
@@ -196,7 +197,7 @@ Shorthand/
 | word_session | FK → WordAttemptSession | nullable, on_delete CASCADE |
 | word_position | IntegerField | nullable |
 | image_data | BinaryField | blank=True, default=b"" |
-| predicted_label | CharField(1) | nullable |
+| predicted_label | CharField(10) | nullable |
 | confidence | FloatField | nullable |
 | is_correct | BooleanField | nullable |
 | status | CharField | choices: pending, processing, completed, failed; default=pending |
@@ -413,20 +414,21 @@ Requires `is_authenticated` AND `is_staff`.
 
 ### ML Pipeline
 
-**Inference** (`ml/inference.py`): Loads TFLite model, runs prediction on preprocessed image
-**Preprocessing** (`ml/preprocessing.py`): Image preparation for the model
+**Model**: Custom CNN (3 conv blocks: 32→64→128 filters, BatchNorm, Dense(128), softmax) trained on 76 classes (26 letters + 50 groupings). Input: 64×64 grayscale. Best epoch 27: 98.85% val accuracy. See `docs/ML_TRAINING_REPORT.md` for full details.
+
+**Inference** (`ml/inference.py`): Loads TFLite model (`ml/model.tflite`, 4.4MB), runs prediction on preprocessed image. Class labels loaded from `ml/classes.json`.
+**Preprocessing** (`ml/preprocessing.py`): Image preparation — binarize, center, resize to 64×64 grayscale.
 
 **Training pipeline** (`ml/train/`):
 | Script | Purpose |
 |--------|---------|
-| `train.py` | MobileNetV2 transfer learning |
-| `augment.py` | Data augmentation |
-| `collect.py` | Data collection |
-| `convert.py` | Model → TFLite conversion |
-| `evaluate.py` | Model evaluation |
-| `generate_synthetic.py` | Synthetic training data |
+| `generate_synthetic.py` | SVG → synthetic training images (200/class with augmentation) |
+| `augment.py` | 10× augmentation (rotation, scale, shift, noise) → 2,000/class |
+| `train.py` | CNN training with EarlyStopping + ReduceLROnPlateau |
+| `evaluate.py` | Per-class accuracy + confusion matrix |
+| `convert.py` | Keras model → TFLite conversion |
 
-**Training dependencies** (`ml/train/requirements.txt`): tensorflow, matplotlib, numpy, pillow, scikit-learn
+**Training dependencies** (`ml/train/requirements.txt`): tensorflow, matplotlib, numpy, pillow, scikit-learn, scipy
 
 **Teeline decomposition** (`checker/teeline.py`): Algorithmic word → letter decomposition with vowel removal, consonant blends, R-doubling rules.
 
@@ -436,7 +438,8 @@ Requires `is_authenticated` AND `is_staff`.
 |---------|-----|---------|
 | `seed_admin` | accounts | Creates superuser from `DJANGO_SUPERUSER_*` env vars |
 | `make_admin` | admin_api | Promotes existing user to staff |
-| `seed_symbols` | checker | Populates Symbol table (a–z) |
+| `seed_symbols` | checker | Populates 26 letter symbols (A–Z) |
+| `seed_groupings` | checker | Populates 51 multi-letter grouping symbols |
 | `seed_words` | checker | Populates ~95 words across 4 topics |
 | `cleanup_stale_sessions` | checker | Removes old anonymous sessions |
 
@@ -570,7 +573,7 @@ Polls an async fetcher at configurable interval (default 1s) until status reache
 **Backend Dockerfile** — Multi-stage:
 - **Base**: Python 3.11-slim with libpq-dev/gcc
 - **Dev**: Django runserver
-- **Prod**: Non-root user, collectstatic, migrations → seed → Gunicorn (2 workers)
+- **Prod**: Non-root user, collectstatic, migrations → seed (symbols + groupings) → Gunicorn (2 workers)
 
 **Frontend Dockerfile**: Node 20 Alpine, Vite dev server with `--host 0.0.0.0`
 
@@ -621,7 +624,7 @@ Defined in `render.yaml`:
 
 ### Endpoint Smoke Tests
 
-`backend/tests/test_endpoints.py` — **71 tests** across **14 test classes** verifying every API endpoint returns the correct status code. Tests cover:
+`backend/tests/test_endpoints.py` — **75 tests** across **14 test classes** verifying every API endpoint returns the correct status code. Tests cover:
 
 | Area | Tests | Coverage |
 |------|-------|----------|

@@ -19,7 +19,8 @@ docker compose up -d db    # just the database
 cd backend
 .venv/Scripts/python.exe manage.py runserver          # dev server
 .venv/Scripts/python.exe manage.py migrate             # apply migrations
-.venv/Scripts/python.exe manage.py seed_symbols        # seed A-Z symbols
+.venv/Scripts/python.exe manage.py seed_symbols        # seed A-Z letter symbols
+.venv/Scripts/python.exe manage.py seed_groupings      # seed 51 multi-letter grouping symbols
 .venv/Scripts/python.exe manage.py seed_words          # seed ~95 practice words
 .venv/Scripts/python.exe manage.py seed_admin          # create superuser from env vars
 ```
@@ -32,7 +33,7 @@ cd frontend && npm run build     # tsc + vite build
 
 ### Tests
 ```bash
-# Endpoint smoke tests (71 tests, SQLite in-memory, no Docker needed)
+# Endpoint smoke tests (75 tests, SQLite in-memory, no Docker needed)
 cd backend && .venv/Scripts/python.exe manage.py test tests.test_endpoints --settings=config.settings.test
 
 # Single test class
