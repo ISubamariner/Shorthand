@@ -34,9 +34,10 @@ export function CreditsPage() {
             </a>
           </p>
           <p>
-            The hand-drawn Teeline alphabet SVGs that power this application —
-            used for both the symbol reference display and as the basis for all
-            ML training data — originate from the teeline.online project. The
+            The hand-drawn Teeline SVGs that power this application —
+            including both the 26-letter alphabet and 50+ multi-letter groupings
+            — are used for symbol reference display and as the basis for all
+            ML training data. They originate from the teeline.online project. The
             outlines were drawn on a tablet in{" "}
             <a
               href="https://krita.org"
@@ -49,7 +50,8 @@ export function CreditsPage() {
           </p>
           <p className="credits-usage">
             <strong>Used for:</strong> Symbol reference images, synthetic
-            training data generation (2,600+ augmented variants per letter)
+            training data generation (2,000 augmented variants per symbol,
+            76 classes total)
           </p>
         </div>
       </section>
@@ -141,7 +143,8 @@ export function CreditsPage() {
             trained from scratch on synthetic data — no pre-trained weights or
             transfer learning. Architecture: 3 convolutional blocks (32 → 64 →
             128 filters) with batch normalization, followed by a dense
-            classifier for 26 letter classes.
+            classifier for 76 symbol classes (26 letters and 50 multi-letter
+            groupings).
           </p>
         </div>
         <div className="credits-card">

@@ -5,7 +5,7 @@ from checker.models import Symbol
 
 GROUPINGS_SVG_DIR = os.path.join(
     os.path.dirname(__file__),
-    "..", "..", "..", "..",
+    "..", "..", "..", "..", "..",
     "data", "reference", "teeline-online", "outline-svgs", "letter-groupings",
 )
 

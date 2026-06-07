@@ -3,6 +3,7 @@ export interface Symbol {
   letter: string;
   name: string;
   reference_image_url: string;
+  symbol_type: "letter" | "grouping";
 }
 
 export interface Attempt {

@@ -16,6 +16,7 @@ export function PracticePage() {
   const [searchParams] = useSearchParams();
   const [symbols, setSymbols] = useState<Symbol[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState<Symbol | null>(null);
+  const [symbolFilter, setSymbolFilter] = useState<"all" | "letter" | "grouping">("all");
   const [randomMode, setRandomMode] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -23,15 +24,14 @@ export function PracticePage() {
   const [streak, setStreak] = useState(0);
   const [score, setScore] = useState(0);
   const [streakMilestone, setStreakMilestone] = useState(0);
-  const [symbolFilter, setSymbolFilter] = useState<"all" | "letter" | "grouping">("all");
   const scoredAttempts = useRef(new Set<string>());
-
-  const fetchAttempt = useCallback((id: string) => api.attempts.get(id), []);
-  const poller = useJobPoller<Attempt>(fetchAttempt);
 
   const filteredSymbols = symbolFilter === "all"
     ? symbols
     : symbols.filter((s) => s.symbol_type === symbolFilter);
+
+  const fetchAttempt = useCallback((id: string) => api.attempts.get(id), []);
+  const poller = useJobPoller<Attempt>(fetchAttempt);
 
   useEffect(() => {
     api.symbols.list().then((syms) => {
@@ -140,9 +140,9 @@ export function PracticePage() {
             className={`tab ${symbolFilter === f ? "active" : ""}`}
             onClick={() => {
               setSymbolFilter(f);
-              const next = f === "all" ? symbols : symbols.filter((s) => s.symbol_type === f);
-              if (next.length && (!selectedSymbol || (f !== "all" && selectedSymbol.symbol_type !== f))) {
-                setSelectedSymbol(pickRandom(next, selectedSymbol));
+              const pool = f === "all" ? symbols : symbols.filter((s) => s.symbol_type === f);
+              if (pool.length && (!selectedSymbol || (f !== "all" && selectedSymbol.symbol_type !== f))) {
+                setSelectedSymbol(pickRandom(pool));
                 poller.stopPolling();
                 setCanvasResetKey((k) => k + 1);
               }

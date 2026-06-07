@@ -23,7 +23,7 @@ class AdminUserDetailSerializer(serializers.ModelSerializer):
 class AdminSymbolSerializer(serializers.ModelSerializer):
     class Meta:
         model = Symbol
-        fields = ("id", "letter", "name", "reference_image_url")
+        fields = ("id", "letter", "name", "reference_image_url", "symbol_type")
 
 
 class AdminWordTopicSerializer(serializers.ModelSerializer):

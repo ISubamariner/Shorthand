@@ -43,8 +43,9 @@ export function ContentPage() {
       <table className="admin-table" style={{ marginBottom: 32 }}>
         <thead>
           <tr>
-            <th>Letter</th>
+            <th>Symbol</th>
             <th>Name</th>
+            <th>Type</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -53,6 +54,7 @@ export function ContentPage() {
             <tr key={s.id}>
               <td>{s.letter}</td>
               <td>{s.name}</td>
+              <td>{s.symbol_type}</td>
               <td>
                 <button
                   className="admin-btn danger"
