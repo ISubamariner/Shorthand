@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { api } from "../../api/client";
 
 const NAV_ITEMS = [
@@ -13,9 +14,22 @@ const NAV_ITEMS = [
 ];
 
 export function AdminLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar">
+      {sidebarOpen && (
+        <div
+          className="admin-sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      <aside className={`admin-sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="admin-sidebar-logo">
           Teeline <span className="accent">ML</span>
           <div style={{ fontSize: 10, opacity: 0.5, marginTop: 4 }}>Admin</div>
@@ -35,17 +49,29 @@ export function AdminLayout() {
       </aside>
       <div className="admin-main">
         <div className="admin-topbar">
-          <a href="/">Back to app</a>
-          <a
-            href="#"
-            onClick={async (e) => {
-              e.preventDefault();
-              await api.auth.logout();
-              window.location.href = "/";
-            }}
+          <button
+            className="admin-hamburger"
+            onClick={() => setSidebarOpen((v) => !v)}
+            aria-label="Toggle sidebar"
+            aria-expanded={sidebarOpen}
           >
-            Logout
-          </a>
+            <span />
+            <span />
+            <span />
+          </button>
+          <div className="admin-topbar-links">
+            <a href="/">Back to app</a>
+            <a
+              href="#"
+              onClick={async (e) => {
+                e.preventDefault();
+                await api.auth.logout();
+                window.location.href = "/";
+              }}
+            >
+              Logout
+            </a>
+          </div>
         </div>
         <div className="admin-content">
           <Outlet />
