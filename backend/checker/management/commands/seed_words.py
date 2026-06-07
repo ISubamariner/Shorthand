@@ -255,6 +255,9 @@ class Command(BaseCommand):
                     word_obj.save(update_fields=["teeline_skeleton"])
                     updated_count += 1
 
+        from checker.teeline_index import invalidate
+        invalidate()
+
         self.stdout.write(
             self.style.SUCCESS(
                 f"Seeded {created_count} words, updated {updated_count} skeletons "
