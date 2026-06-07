@@ -1,3 +1,4 @@
+from django.core.management import call_command
 from django.test import TestCase
 from checker.models import Symbol, SpecialOutline
 
@@ -36,3 +37,23 @@ class SpecialOutlineTest(TestCase):
         from django.db import IntegrityError
         with self.assertRaises(IntegrityError):
             SpecialOutline.objects.create(symbol=sym, meaning="account")
+
+
+class SeedGroupingsTest(TestCase):
+    def test_seed_groupings_creates_symbols(self):
+        call_command("seed_groupings")
+        groupings = Symbol.objects.filter(symbol_type="grouping")
+        assert groupings.count() >= 50  # at least 50 of the 51
+
+    def test_seed_groupings_idempotent(self):
+        call_command("seed_groupings")
+        call_command("seed_groupings")
+        groupings = Symbol.objects.filter(symbol_type="grouping")
+        count = groupings.count()
+        assert count >= 50
+
+    def test_seed_groupings_sets_correct_letters(self):
+        call_command("seed_groupings")
+        assert Symbol.objects.filter(letter="CM", symbol_type="grouping").exists()
+        assert Symbol.objects.filter(letter="SH", symbol_type="grouping").exists() or \
+               Symbol.objects.filter(letter="SHE", symbol_type="grouping").exists()
