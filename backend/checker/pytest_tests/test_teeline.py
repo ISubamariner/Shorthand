@@ -1,4 +1,12 @@
-from checker.teeline import decompose
+from checker.teeline import decompose, decompose_to_letters, resolve_special_outline
+
+KNOWN_GROUPINGS = [
+    "ABT", "ANY", "AS", "BD", "BT", "CD", "CHF", "CM", "CR", "CV",
+    "DB", "DR", "FB", "FL", "FM", "FR", "FW", "HV", "IF", "IS",
+    "IT", "MB", "MN", "MNY", "MR", "NO", "NV", "NW", "OM",
+    "ON", "OTHR", "PV", "RF", "SD", "SE", "SHE", "SM", "SN", "SO",
+    "TB", "THS", "TLN", "TR/THR", "US", "VN", "WF", "WN", "WR", "WRD", "WS",
+]
 
 
 class TestPhoneticSubstitutions:
@@ -104,3 +112,60 @@ class TestComponentStructure:
         assert all("blend_with" in c for c in result)
         assert all("is_doubled_for_r" in c for c in result)
         assert all("position" in c for c in result)
+
+
+class TestGreedyDecomposition:
+    def test_simple_word_uses_grouping(self):
+        result = decompose("command", known_groupings=KNOWN_GROUPINGS)
+        letters = [c["letter"] for c in result]
+        assert "CM" in letters
+
+    def test_greedy_picks_longest_match(self):
+        result = decompose("money", known_groupings=KNOWN_GROUPINGS)
+        letters = [c["letter"] for c in result]
+        assert "MNY" in letters
+
+    def test_no_grouping_falls_back_to_individual(self):
+        result = decompose("dog", known_groupings=KNOWN_GROUPINGS)
+        letters = [c["letter"] for c in result]
+        assert letters == ["D", "G"]
+
+    def test_mixed_grouping_and_individual(self):
+        result = decompose("discover", known_groupings=KNOWN_GROUPINGS)
+        letters = [c["letter"] for c in result]
+        assert "CV" in letters
+
+    def test_empty_groupings_list_falls_back(self):
+        result = decompose("command", known_groupings=[])
+        letters = [c["letter"] for c in result]
+        assert all(len(l) == 1 for l in letters)
+
+    def test_none_groupings_backward_compatible(self):
+        result = decompose("command")
+        letters = [c["letter"] for c in result]
+        assert all(len(l) == 1 for l in letters)
+
+    def test_decompose_to_letters_passes_groupings(self):
+        result = decompose_to_letters("command", known_groupings=KNOWN_GROUPINGS)
+        assert "CM" in result
+
+
+class TestSpecialOutlineResolution:
+    def test_known_special_outline(self):
+        specials = {"business": "BS", "account": "AC"}
+        result = resolve_special_outline("business", specials)
+        assert result is not None
+        assert result["letter"] == "BS"
+        assert result["is_special_outline"] is True
+
+    def test_unknown_word(self):
+        result = resolve_special_outline("xylophone", {"business": "BS"})
+        assert result is None
+
+    def test_case_insensitive(self):
+        result = resolve_special_outline("Business", {"business": "BS"})
+        assert result is not None
+
+    def test_no_specials_dict(self):
+        result = resolve_special_outline("business")
+        assert result is None

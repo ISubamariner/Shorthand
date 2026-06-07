@@ -19,7 +19,49 @@ BLENDS = {"SH", "CH", "TH", "CM", "CN", "PL"}
 R_DOUBLE_PREFIXES = {"D", "T", "L", "M", "W"}
 
 
-def decompose(word: str) -> list[dict]:
+def _greedy_match(skeleton: str, known_groupings: list[str]) -> list[str]:
+    """Greedy longest-match of consonant skeleton against known groupings."""
+    expanded = set()
+    for g in known_groupings:
+        for variant in g.split("/"):
+            expanded.add(variant)
+
+    max_len = max((len(g) for g in expanded), default=1)
+
+    result = []
+    i = 0
+    while i < len(skeleton):
+        matched = False
+        for length in range(min(max_len, len(skeleton) - i), 1, -1):
+            candidate = skeleton[i:i + length]
+            if candidate in expanded:
+                result.append(candidate)
+                i += length
+                matched = True
+                break
+        if not matched:
+            result.append(skeleton[i])
+            i += 1
+    return result
+
+
+def resolve_special_outline(word, special_outlines=None):
+    """Resolve a word to its special outline if one exists."""
+    if not special_outlines:
+        return None
+    key = word.lower().strip()
+    if key in special_outlines:
+        return {
+            "letter": special_outlines[key],
+            "blend_with": None,
+            "is_doubled_for_r": False,
+            "is_special_outline": True,
+            "position": 0,
+        }
+    return None
+
+
+def decompose(word: str, known_groupings: list[str] | None = None) -> list[dict]:
     text = word.upper().strip()
 
     for old, new in PHONETIC_SUBS:
@@ -70,6 +112,20 @@ def decompose(word: str) -> list[dict]:
             text = text[0]
         # else: keep both (vowel-consonant or two consonants)
 
+    # If known_groupings provided, use greedy matching
+    if known_groupings:
+        units = _greedy_match(text, known_groupings)
+        components = []
+        for idx, unit in enumerate(units):
+            components.append({
+                "letter": unit,
+                "blend_with": None,
+                "is_doubled_for_r": False,
+                "position": idx,
+            })
+        return components
+
+    # Otherwise, use original per-letter logic with blend/R-doubling detection
     blend_pairs = set()
     for idx in range(len(text) - 1):
         pair = text[idx] + text[idx + 1]
@@ -100,5 +156,5 @@ def decompose(word: str) -> list[dict]:
     return components
 
 
-def decompose_to_letters(word: str) -> str:
-    return "".join(c["letter"] for c in decompose(word))
+def decompose_to_letters(word: str, known_groupings: list[str] | None = None) -> str:
+    return "".join(c["letter"] for c in decompose(word, known_groupings=known_groupings))
