@@ -4,6 +4,7 @@ import "./styles/tokens.css";
 import "./styles/components.css";
 import "./styles/layout.css";
 import "./styles/admin.css";
+import "./styles/responsive.css";
 import { BackendLoader } from "./components/BackendLoader";
 import { Header } from "./components/Header";
 import { LeaderboardPage } from "./pages/LeaderboardPage";

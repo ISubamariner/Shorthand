@@ -1,0 +1,17 @@
+/* ===== Phone (<=480px) ===== */
+@media (max-width: 480px) {
+  .main {
+    padding: 16px 12px 40px;
+  }
+
+  .btn {
+    min-height: 44px;
+  }
+}
+
+/* ===== Tablet and below (<=768px) ===== */
+@media (max-width: 768px) {
+  body {
+    -webkit-text-size-adjust: 100%;
+  }
+}
