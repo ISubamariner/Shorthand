@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { api, getAccessToken } from "../api/client";
 
 export function Header() {
@@ -7,8 +7,10 @@ export function Header() {
   const [username, setUsername] = useState<string | null>(null);
   const [isStaff, setIsStaff] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -18,6 +20,10 @@ export function Header() {
       }).catch(() => {});
     }
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -31,12 +37,50 @@ export function Header() {
     }
   }, [dropdownOpen]);
 
+  const navLinks = (
+    <>
+      <NavLink to="/" className={({ isActive }) => `tab ${isActive ? "active" : ""}`} end>
+        Practice
+      </NavLink>
+      <NavLink to="/words" className={({ isActive }) => `tab ${isActive ? "active" : ""}`}>
+        Words
+      </NavLink>
+      <NavLink to="/progress" className={({ isActive }) => `tab ${isActive ? "active" : ""}`}>
+        Progress
+      </NavLink>
+      <NavLink to="/leaderboard" className={({ isActive }) => `tab ${isActive ? "active" : ""}`}>
+        Leaderboard
+      </NavLink>
+      <NavLink to="/about" className={({ isActive }) => `tab ${isActive ? "active" : ""}`}>
+        About
+      </NavLink>
+      <NavLink to="/credits" className={({ isActive }) => `tab ${isActive ? "active" : ""}`}>
+        Credits
+      </NavLink>
+      {isStaff && (
+        <NavLink to="/admin" className={({ isActive }) => `tab ${isActive ? "active" : ""}`}>
+          Admin
+        </NavLink>
+      )}
+    </>
+  );
+
   return (
     <div className="header">
       <div className="header-top">
         <div className="logo">
           Teeline <span className="accent">ML</span>
         </div>
+        <button
+          className={`hamburger ${menuOpen ? "open" : ""}`}
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="Toggle navigation menu"
+          aria-expanded={menuOpen}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
         <div className="user-info">
           {isLoggedIn && username ? (
             <div className="user-dropdown" ref={dropdownRef}>
@@ -73,52 +117,43 @@ export function Header() {
         </div>
       </div>
       <div className="tabs">
-        <NavLink
-          to="/"
-          className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
-          end
-        >
-          Practice
-        </NavLink>
-        <NavLink
-          to="/words"
-          className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
-        >
-          Words
-        </NavLink>
-        <NavLink
-          to="/progress"
-          className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
-        >
-          Progress
-        </NavLink>
-        <NavLink
-          to="/leaderboard"
-          className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
-        >
-          Leaderboard
-        </NavLink>
-        <NavLink
-          to="/about"
-          className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
-        >
-          About
-        </NavLink>
-        <NavLink
-          to="/credits"
-          className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
-        >
-          Credits
-        </NavLink>
-        {isStaff && (
-          <NavLink
-            to="/admin"
-            className={({ isActive }) => `tab ${isActive ? "active" : ""}`}
-          >
-            Admin
-          </NavLink>
-        )}
+        {navLinks}
       </div>
+      <nav className={`mobile-menu ${menuOpen ? "open" : ""}`}>
+        <div className="mobile-menu-nav">
+          {navLinks}
+        </div>
+        {isLoggedIn && username && (
+          <>
+            <div className="mobile-menu-divider" />
+            <div className="mobile-menu-user">
+              <button
+                className="mobile-menu-item"
+                onClick={() => navigate("/settings")}
+              >
+                Settings
+              </button>
+              <button
+                className="mobile-menu-item"
+                onClick={async () => {
+                  await api.auth.logout();
+                  window.location.href = "/";
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          </>
+        )}
+        {!isLoggedIn && (
+          <>
+            <div className="mobile-menu-divider" />
+            <div className="mobile-menu-user">
+              <NavLink to="/login" className="mobile-menu-item">Login</NavLink>
+            </div>
+          </>
+        )}
+      </nav>
     </div>
   );
 }
