@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
+from config.exceptions import AppError
+
 from .models import WordAttemptSession
 from .permissions import AllowAnonymousSession
 from .word_repository import WordRepository, WordTopicRepository
@@ -133,9 +135,6 @@ class WordSuggestView(APIView):
         elif prefix:
             suggestions = suggest_words_by_prefix(prefix.upper())
         else:
-            return Response(
-                {"error": "Provide 'skeleton' or 'prefix' query parameter"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            raise AppError("Provide 'skeleton' or 'prefix' query parameter")
 
         return Response(WordSuggestionSerializer(suggestions, many=True).data)

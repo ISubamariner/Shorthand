@@ -26,7 +26,8 @@ export function WordDrawingMode({ onSelectWord }: WordDrawingModeProps) {
         image_data: base64,
       });
       startPolling(created.id);
-    } catch {
+    } catch (err) {
+      console.error("Failed to submit drawing", err);
       setSubmitting(false);
       setError("Failed to submit drawing. Please try again.");
     }
