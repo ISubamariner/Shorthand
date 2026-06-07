@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 _shutdown = threading.Event()
 _worker_thread = None
 _start_lock = threading.Lock()
+_atexit_registered = False
 
 
 def _collect_loop(interval: float, retention_days: int) -> None:
@@ -44,7 +45,7 @@ def _collect_loop(interval: float, retention_days: int) -> None:
 
 
 def start_collector() -> None:
-    global _worker_thread
+    global _worker_thread, _atexit_registered
     with _start_lock:
         if _worker_thread and _worker_thread.is_alive():
             return
@@ -58,7 +59,11 @@ def start_collector() -> None:
             daemon=True,
         )
         _worker_thread.start()
-        atexit.register(stop_collector)
+
+        if not _atexit_registered:
+            atexit.register(stop_collector)
+            _atexit_registered = True
+
         logger.info("Monitoring collector thread started")
 
 
