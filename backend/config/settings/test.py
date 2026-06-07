@@ -2,6 +2,7 @@ import os
 
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ["DISABLE_JOB_WORKERS"] = "1"
+os.environ["DISABLE_MONITORING_WORKER"] = "1"
 
 from .base import *  # noqa: F401,F403
 

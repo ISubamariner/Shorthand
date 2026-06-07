@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "checker",
     "jobs",
     "admin_api",
+    "monitoring",
 ]
 
 MIDDLEWARE = [
