@@ -29,10 +29,20 @@ def main(output_dir="../../data/raw"):
     os.makedirs(output_dir, exist_ok=True)
     exported = 0
 
+    import re
+    safe_pattern = re.compile(r"^[A-Za-z0-9_-]+$")
+    real_output = os.path.realpath(output_dir)
+
     for attempt in attempts:
         letter = attempt.symbol.letter
         dir_name = letter.replace("/", "_")
+        if not safe_pattern.match(dir_name) or dir_name in ("", ".", ".."):
+            print(f"  Skipping unsafe symbol letter: {letter!r}")
+            continue
         letter_dir = os.path.join(output_dir, dir_name)
+        if os.path.commonpath([os.path.realpath(letter_dir), real_output]) != real_output:
+            print(f"  Skipping path escape: {letter!r}")
+            continue
         os.makedirs(letter_dir, exist_ok=True)
 
         filename = f"{attempt.id}.png"
