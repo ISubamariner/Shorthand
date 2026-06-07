@@ -106,6 +106,7 @@ export function MonitoringPage() {
   const [tableStats, setTableStats] = useState<MonitoringTableStat[]>([]);
   const [range, setRange] = useState<"24h" | "7d">("24h");
   const [error, setError] = useState<string | null>(null);
+  const [stale, setStale] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("size_mb");
   const [sortAsc, setSortAsc] = useState(false);
 
@@ -127,7 +128,13 @@ export function MonitoringPage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      adminApi.monitoring.current().then(setCurrent).catch(() => {});
+      adminApi.monitoring
+        .current()
+        .then((c) => {
+          setCurrent(c);
+          setStale(false);
+        })
+        .catch(() => setStale(true));
     }, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -159,6 +166,11 @@ export function MonitoringPage() {
   return (
     <div>
       <h1 className="admin-page-title">Monitoring</h1>
+      {stale && (
+        <p style={{ color: "var(--accent)", fontSize: 12, marginBottom: 12 }}>
+          Auto-refresh failed — showing stale data
+        </p>
+      )}
 
       <div className="admin-stats-grid">
         <StatCard

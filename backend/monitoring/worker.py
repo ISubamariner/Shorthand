@@ -8,6 +8,7 @@ import django.db
 logger = logging.getLogger(__name__)
 
 _shutdown = threading.Event()
+_worker_thread = None
 
 
 def _collect_loop(interval: float, retention_days: int) -> None:
@@ -42,15 +43,19 @@ def _collect_loop(interval: float, retention_days: int) -> None:
 
 
 def start_collector() -> None:
+    global _worker_thread
+    if _worker_thread and _worker_thread.is_alive():
+        return
+
     interval = int(os.environ.get("MONITORING_INTERVAL_SECONDS", "300"))
     retention_days = int(os.environ.get("MONITORING_RETENTION_DAYS", "7"))
 
-    t = threading.Thread(
+    _worker_thread = threading.Thread(
         target=_collect_loop,
         args=(interval, retention_days),
         daemon=True,
     )
-    t.start()
+    _worker_thread.start()
     atexit.register(stop_collector)
     logger.info("Monitoring collector thread started")
 
