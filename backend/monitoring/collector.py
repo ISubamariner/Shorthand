@@ -1,7 +1,9 @@
 import logging
 import sys
+import time
 
 import psutil
+import django.db
 from django.db import connection
 
 logger = logging.getLogger(__name__)
@@ -14,7 +16,6 @@ def collect_server_metrics():
     cpu = psutil.cpu_percent(interval=0)
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage(_DISK_PATH)
-    import time
 
     return {
         "cpu_percent": cpu,
@@ -73,7 +74,7 @@ def collect_db_metrics():
             "db_connections": db_connections,
             "table_stats": table_stats,
         }
-    except Exception:
+    except django.db.Error:
         logger.exception("Failed to collect DB metrics")
         return {"db_size_mb": 0, "db_connections": 0, "table_stats": []}
 
