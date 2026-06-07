@@ -57,3 +57,31 @@ class SeedGroupingsTest(TestCase):
         assert Symbol.objects.filter(letter="CM", symbol_type="grouping").exists()
         assert Symbol.objects.filter(letter="SH", symbol_type="grouping").exists() or \
                Symbol.objects.filter(letter="SHE", symbol_type="grouping").exists()
+
+
+class SeedSpecialOutlinesTest(TestCase):
+    def test_seed_special_outlines_creates_entries(self):
+        call_command("seed_groupings")
+        call_command("seed_special_outlines")
+        assert SpecialOutline.objects.count() > 0
+
+    def test_seed_special_outlines_links_to_grouping_symbols(self):
+        call_command("seed_groupings")
+        call_command("seed_special_outlines")
+        bs = SpecialOutline.objects.filter(meaning="business").first()
+        assert bs is not None
+        assert bs.symbol.letter == "BS"
+
+    def test_seed_special_outlines_handles_multiple_meanings(self):
+        call_command("seed_groupings")
+        call_command("seed_special_outlines")
+        mr_outlines = SpecialOutline.objects.filter(symbol__letter="MR")
+        assert mr_outlines.count() >= 2
+
+    def test_seed_special_outlines_idempotent(self):
+        call_command("seed_groupings")
+        call_command("seed_special_outlines")
+        count1 = SpecialOutline.objects.count()
+        call_command("seed_special_outlines")
+        count2 = SpecialOutline.objects.count()
+        assert count1 == count2
