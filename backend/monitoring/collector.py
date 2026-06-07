@@ -3,7 +3,6 @@ import sys
 import time
 
 import psutil
-import django.db
 from django.db import connection
 
 logger = logging.getLogger(__name__)
@@ -74,7 +73,7 @@ def collect_db_metrics():
             "db_connections": db_connections,
             "table_stats": table_stats,
         }
-    except django.db.Error:
+    except Exception:
         logger.exception("Failed to collect DB metrics")
         return {"db_size_mb": 0, "db_connections": 0, "table_stats": []}
 
