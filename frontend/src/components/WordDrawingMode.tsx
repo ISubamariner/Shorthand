@@ -42,6 +42,7 @@ export function WordDrawingMode({ onSelectWord }: WordDrawingModeProps) {
     } else if (attempt?.status === "completed" || attempt?.status === "failed") {
       setSubmitting(false);
       stopPolling();
+      setCanvasResetKey((k) => k + 1);
       if (attempt?.status === "completed") {
         setError("Could not recognize the grouping. Try again.");
       }
