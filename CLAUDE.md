@@ -96,7 +96,7 @@ Three Django settings modules:
 
 ## Deployment Seeding
 
-All seed commands run in `render.yaml` `preDeployCommand` after `migrate`. When adding a new `seed_*` management command, add it to the chain in `render.yaml` as well. All seed commands use `get_or_create` so they're idempotent and safe to re-run on every deploy.
+All seed commands run in **both** `render.yaml` `preDeployCommand` and the Dockerfile `CMD` (before gunicorn). When adding a new `seed_*` management command, add it to both places. All seed commands use `get_or_create` so they're idempotent and safe to re-run on every deploy. Note: `seed_special_outlines` requires `data/reference/` which is outside the Docker build context — it logs a warning and skips in production.
 
 ## Known Issues
 
