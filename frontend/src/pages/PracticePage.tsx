@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { api } from "../api/client";
+import { Link, useSearchParams } from "react-router-dom";
+import { api, getAccessToken } from "../api/client";
 import { DrawingCanvas } from "../components/DrawingCanvas";
 import { FeedbackPanel } from "../components/FeedbackPanel";
 import { useJobPoller } from "../hooks/useJobPoller";
@@ -24,6 +24,7 @@ export function PracticePage() {
   const [streak, setStreak] = useState(0);
   const [score, setScore] = useState(0);
   const [streakMilestone, setStreakMilestone] = useState(0);
+  const [tooltipDismissed, setTooltipDismissed] = useState(false);
   const scoredAttempts = useRef(new Set<string>());
 
   const filteredSymbols = symbolFilter === "all"
@@ -123,8 +124,23 @@ export function PracticePage() {
         <div className="stat-badge">
           <span className="stat-icon">*</span> Streak: {streak}
         </div>
-        <div className="stat-badge">
-          Score: {score}
+        <div className="stat-badge-wrap">
+          <div className="stat-badge">
+            Score: {score}
+          </div>
+          {score > 100 && !getAccessToken() && !tooltipDismissed && (
+            <div className="save-tooltip">
+              <Link to="/login">Register or log in</Link> to save your progress
+              <button
+                className="save-tooltip-close"
+                onClick={() => setTooltipDismissed(true)}
+                type="button"
+                aria-label="Dismiss"
+              >
+                &times;
+              </button>
+            </div>
+          )}
         </div>
       </div>
       {streakMilestone > 0 && (

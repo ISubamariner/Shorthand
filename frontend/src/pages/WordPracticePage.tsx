@@ -132,8 +132,12 @@ export function WordPracticePage() {
   }
 
   return (
-    <div className="page">
+    <div className="main">
       <h1>Word Practice</h1>
+
+      <div className="disclaimer">
+        This feature is under active development. Expect rough edges and missing functionality.
+      </div>
 
       <div className="mode-toggle">
         <button
@@ -158,6 +162,7 @@ export function WordPracticePage() {
         <>
           <div className="word-filters">
             <select
+              className="select"
               value={selectedDifficulty}
               onChange={(e) => setSelectedDifficulty(e.target.value)}
             >
@@ -168,6 +173,7 @@ export function WordPracticePage() {
             </select>
 
             <select
+              className="select"
               value={selectedTopic}
               onChange={(e) => setSelectedTopic(e.target.value)}
             >
@@ -180,6 +186,7 @@ export function WordPracticePage() {
             </select>
 
             <select
+              className="select"
               value={selectedWord?.id || ""}
               onChange={(e) => {
                 if (e.target.value) handleSelectWord(e.target.value);

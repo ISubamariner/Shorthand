@@ -93,6 +93,7 @@ class Attempt(TimestampedModel):
     predicted_label = models.CharField(max_length=10, null=True, blank=True)
     confidence = models.FloatField(null=True, blank=True)
     is_correct = models.BooleanField(null=True, blank=True)
+    adjusted = models.BooleanField(default=False)
     status = models.CharField(
         max_length=10,
         choices=Status.choices,

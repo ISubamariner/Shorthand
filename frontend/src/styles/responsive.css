@@ -189,6 +189,19 @@
   }
 }
 
+/* ===== Word practice: stack on small screens ===== */
+@media (max-width: 480px) {
+  .word-filters {
+    flex-direction: column;
+  }
+  .word-filters .select {
+    width: 100%;
+  }
+  .word-practice-layout {
+    flex-direction: column;
+  }
+}
+
 /* ===== Practice page: wrap symbol header on small screens ===== */
 @container (max-width: 480px) {
   .practice-header {

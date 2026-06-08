@@ -12,10 +12,10 @@ class SymbolAdmin(admin.ModelAdmin):
 
 @admin.register(Attempt)
 class AttemptAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "symbol_letter", "status", "is_correct", "confidence", "created_at")
-    list_filter = ("status", "is_correct", "symbol__letter")
+    list_display = ("id", "user", "symbol_letter", "predicted_label", "status", "is_correct", "adjusted", "confidence", "created_at")
+    list_filter = ("status", "is_correct", "adjusted", "symbol__letter")
     search_fields = ("id", "user__username")
-    readonly_fields = ("id", "created_at", "updated_at", "predicted_label", "confidence", "is_correct")
+    readonly_fields = ("id", "created_at", "updated_at", "predicted_label", "confidence", "is_correct", "adjusted")
     raw_id_fields = ("user", "symbol")
 
     @admin.display(description="Symbol", ordering="symbol__letter")
