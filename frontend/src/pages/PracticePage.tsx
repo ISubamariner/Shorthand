@@ -6,8 +6,9 @@ import { FeedbackPanel } from "../components/FeedbackPanel";
 import { useJobPoller } from "../hooks/useJobPoller";
 import type { Attempt, Symbol } from "../types";
 
-function pickRandom(syms: Symbol[], exclude?: Symbol | null): Symbol {
-  const pool = exclude ? syms.filter((s) => s.letter !== exclude.letter) : syms;
+function pickRandom(syms: Symbol[], recentLetters: string[]): Symbol {
+  const recentSet = new Set(recentLetters);
+  const pool = syms.filter((s) => !recentSet.has(s.letter));
   const source = pool.length ? pool : syms;
   return source[Math.floor(Math.random() * source.length)]!;
 }
@@ -26,6 +27,8 @@ export function PracticePage() {
   const [streakMilestone, setStreakMilestone] = useState(0);
   const [tooltipDismissed, setTooltipDismissed] = useState(false);
   const scoredAttempts = useRef(new Set<string>());
+  const [recentLetters, setRecentLetters] = useState<string[]>([]);
+  const [noRepeatCount, setNoRepeatCount] = useState<{ all: number; letter: number; grouping: number }>({ all: 10, letter: 10, grouping: 10 });
 
   const filteredSymbols = symbolFilter === "all"
     ? symbols
@@ -47,12 +50,16 @@ export function PracticePage() {
           return;
         }
       }
-      if (syms.length) setSelectedSymbol(pickRandom(syms));
+      if (syms.length) setSelectedSymbol(pickRandom(syms, []));
     }).catch(() => setSubmitError("Failed to load symbols"));
 
     api.progress.get().then((p) => {
       setStreak(p.current_streak);
       setScore(p.total_score);
+    }).catch(() => {});
+
+    api.practiceSettings.get().then((s) => {
+      setNoRepeatCount(s.practice_no_repeat_count);
     }).catch(() => {});
   }, [searchParams]);
 
@@ -73,10 +80,20 @@ export function PracticePage() {
     }
   }
 
+  const currentLimit = noRepeatCount[symbolFilter];
+
+  function trackRecent(symbol: Symbol) {
+    setRecentLetters((prev) => {
+      const next = [symbol.letter, ...prev.filter((l) => l !== symbol.letter)];
+      return next.slice(0, currentLimit);
+    });
+  }
+
   function handleNext() {
     if (!filteredSymbols.length || !selectedSymbol) return;
     if (randomMode) {
-      setSelectedSymbol(pickRandom(filteredSymbols, selectedSymbol));
+      trackRecent(selectedSymbol);
+      setSelectedSymbol(pickRandom(filteredSymbols, [...recentLetters, selectedSymbol.letter].slice(0, currentLimit)));
     } else {
       const idx = filteredSymbols.findIndex((s) => s.letter === selectedSymbol.letter);
       setSelectedSymbol(filteredSymbols[(idx + 1) % filteredSymbols.length]!);
@@ -158,7 +175,7 @@ export function PracticePage() {
               setSymbolFilter(f);
               const pool = f === "all" ? symbols : symbols.filter((s) => s.symbol_type === f);
               if (pool.length && (!selectedSymbol || (f !== "all" && selectedSymbol.symbol_type !== f))) {
-                setSelectedSymbol(pickRandom(pool));
+                setSelectedSymbol(pickRandom(pool, recentLetters.slice(0, noRepeatCount[f])));
                 poller.stopPolling();
                 setCanvasResetKey((k) => k + 1);
               }
@@ -208,7 +225,7 @@ export function PracticePage() {
             onClick={() => {
               setRandomMode((prev) => !prev);
               if (!randomMode && filteredSymbols.length) {
-                setSelectedSymbol(pickRandom(filteredSymbols, selectedSymbol));
+                setSelectedSymbol(pickRandom(filteredSymbols, recentLetters.slice(0, currentLimit)));
                 poller.stopPolling();
                 setCanvasResetKey((k) => k + 1);
               }

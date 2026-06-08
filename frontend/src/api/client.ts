@@ -158,6 +158,11 @@ export const api = {
       return request(`/symbols/${letter}/`);
     },
   },
+  practiceSettings: {
+    get(): Promise<{ practice_no_repeat_count: { all: number; letter: number; grouping: number } }> {
+      return request("/practice-settings/");
+    },
+  },
   attempts: {
     create(data: {
       symbol_letter: string;

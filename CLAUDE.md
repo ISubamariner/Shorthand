@@ -23,6 +23,8 @@ cd backend
 .venv/Scripts/python.exe manage.py seed_groupings      # seed 51 multi-letter grouping symbols
 .venv/Scripts/python.exe manage.py seed_words          # seed ~95 practice words
 .venv/Scripts/python.exe manage.py seed_admin          # create superuser from env vars
+.venv/Scripts/python.exe manage.py seed_special_outlines # seed special outline references
+.venv/Scripts/python.exe manage.py seed_settings       # seed default system settings (e.g. practice_no_repeat_count)
 ```
 
 ### Frontend (local)
@@ -91,6 +93,10 @@ Three Django settings modules:
 - `config.settings.production` — prod (Postgres via DATABASE_URL, HTTPS, WhiteNoise)
 
 `base.py` requires `SECRET_KEY` env var on import. Local/test override it, but the env var must exist or be set before import.
+
+## Deployment Seeding
+
+All seed commands run in `render.yaml` `preDeployCommand` after `migrate`. When adding a new `seed_*` management command, add it to the chain in `render.yaml` as well. All seed commands use `get_or_create` so they're idempotent and safe to re-run on every deploy.
 
 ## Known Issues
 

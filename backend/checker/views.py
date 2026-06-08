@@ -186,3 +186,23 @@ class SpecialOutlineListView(APIView):
     def get(self, request):
         outlines = SpecialOutline.objects.select_related("symbol").all()
         return Response(SpecialOutlineSerializer(outlines, many=True).data)
+
+
+class PracticeSettingsView(APIView):
+    permission_classes = [AllowAny]
+
+    DEFAULTS = {
+        "practice_no_repeat_count": {"all": 10, "letter": 10, "grouping": 10},
+    }
+
+    def get(self, request):
+        from admin_api.models import SystemSetting
+
+        settings = {}
+        for key, default in self.DEFAULTS.items():
+            try:
+                setting = SystemSetting.objects.get(key=key)
+                settings[key] = setting.value
+            except SystemSetting.DoesNotExist:
+                settings[key] = default
+        return Response(settings)

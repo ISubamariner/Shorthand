@@ -24,12 +24,13 @@ def handle_predict(job: Job) -> None:
 
     top = predictions[0]
     attempt.predicted_label = top["label"]
-    attempt.confidence = top["confidence"]
     expected = attempt.symbol.letter
     top_labels = [p["label"] for p in predictions[:3]]
     top1_match = top["label"] == expected
     attempt.is_correct = expected in top_labels
     attempt.adjusted = attempt.is_correct and not top1_match
+    expected_pred = next((p for p in predictions[:3] if p["label"] == expected), None)
+    attempt.confidence = expected_pred["confidence"] if expected_pred else top["confidence"]
     attempt.status = Attempt.Status.COMPLETED
     attempt.save(update_fields=["predicted_label", "confidence", "is_correct", "adjusted", "status"])
 

@@ -5,6 +5,7 @@ from .views import (
     AttemptImageView,
     AttemptListView,
     LeaderboardView,
+    PracticeSettingsView,
     ProgressView,
     SpecialOutlineListView,
     SymbolDetailView,
@@ -38,4 +39,5 @@ urlpatterns = [
     path("word-sessions/<uuid:pk>/complete/", WordSessionCompleteView.as_view(), name="word-session-complete"),
     path("word-progress/", WordProgressView.as_view(), name="word-progress"),
     path("word-suggest/", WordSuggestView.as_view(), name="word-suggest"),
+    path("practice-settings/", PracticeSettingsView.as_view(), name="practice-settings"),
 ]
